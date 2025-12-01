@@ -2,7 +2,7 @@
 
 julia_version = "1.12.1"
 manifest_format = "2.0"
-project_hash = "1e02f9508411c99a5a6104b33f85e3bd4643b725"
+project_hash = "8d43d23dfc2e447e08deba31f5787d52c039a9f2"
 
 [[deps.AbstractFFTs]]
 deps = ["LinearAlgebra"]
@@ -171,6 +171,12 @@ deps = ["Artifacts", "Bzip2_jll", "CompilerSupportLibraries_jll", "Fontconfig_jl
 git-tree-sha1 = "fde3bf89aead2e723284a8ff9cdf5b551ed700e8"
 uuid = "83423d85-b0ee-5818-9007-b63ccbeb887a"
 version = "1.18.5+0"
+
+[[deps.CatalogPreprocess]]
+deps = ["AlgebraOfGraphics", "CSV", "CairoMakie", "DataFrames"]
+path = "."
+uuid = "b473eb64-b137-4efd-a9b4-74cb17c049bd"
+version = "0.0.0"
 
 [[deps.ChainRulesCore]]
 deps = ["Compat", "LinearAlgebra"]

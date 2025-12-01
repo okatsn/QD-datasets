@@ -1,5 +1,23 @@
+name = "CatalogPreprocess"
+uuid = "b473eb64-b137-4efd-a9b4-74cb17c049bd"
+
 [deps]
 AlgebraOfGraphics = "cbdf2221-f076-402e-a563-3d30da359d67"
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
 CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
+
+[compat]
+AlgebraOfGraphics = "0.12.0"
+CSV = "0.10.15"
+CairoMakie = "0.15.7"
+DataFrames = "1.8.1"
+julia = "1.10"
+
+[extras]
+CompatHelperLocal = "5224ae11-6099-4aaa-941d-3aab004bd678"
+Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test", "Documenter", "CompatHelperLocal"]
