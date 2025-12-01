@@ -1,0 +1,7 @@
+{
+    "devcontainer_name": "QDdatasets",
+    "service": "devqdd",
+    "image": "imgqdd",
+    "docker_compose_name": "qd-datasets",
+    "dind": true
+}
