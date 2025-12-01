@@ -1,0 +1,5 @@
+outs:
+- md5: 19166b2f68427baf87fa69e2b6f4f423
+  size: 3109434
+  hash: md5
+  path: GDMScatalog_2014.csv

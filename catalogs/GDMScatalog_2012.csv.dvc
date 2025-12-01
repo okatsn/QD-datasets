@@ -1,0 +1,5 @@
+outs:
+- md5: 8a7fd33d8e7aa4ae4dec43fdc13f2898
+  size: 2646806
+  hash: md5
+  path: GDMScatalog_2012.csv

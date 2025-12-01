@@ -1,0 +1,5 @@
+outs:
+- md5: ddbeff6abaaf9cd8714c23d566ec7a83
+  size: 4289828
+  hash: md5
+  path: GDMScatalog_2018.csv

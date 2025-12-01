@@ -1,0 +1,4 @@
+[core]
+    remote = qddatasets
+['remote "qddatasets"']
+    url = gdrive://1BovcoghkZgQB0CxndJ4X0Q-9EUH18uAp
