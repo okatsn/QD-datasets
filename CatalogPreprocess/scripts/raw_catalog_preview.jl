@@ -17,6 +17,7 @@ df0 = @chain raws begin
 end
 
 function main()
-    eqkmap = data(df0) * mapping(:lon, :lat; markersize=:ML, color=:date) * visual(Scatter) |> draw
+    eqkmap = data(df0) * mapping(:lon, :lat; markersize=:ML, color=:ML, layout=:year) * visual(Scatter; strokewidth=0.1, strokecolor=:white)
+    draw(eqkmap; figure=(; size=(1500, 1500)))
 
 end
