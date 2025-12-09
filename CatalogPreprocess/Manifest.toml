@@ -2,7 +2,7 @@
 
 julia_version = "1.12.1"
 manifest_format = "2.0"
-project_hash = "2def271e0b2c31f24590ecf672abd6a62ab4eeb4"
+project_hash = "5574dec59f9ffb75dda10d44ab5346a91c012fd0"
 
 [[deps.AbstractFFTs]]
 deps = ["LinearAlgebra"]
@@ -173,7 +173,7 @@ uuid = "83423d85-b0ee-5818-9007-b63ccbeb887a"
 version = "1.18.5+0"
 
 [[deps.CatalogPreprocess]]
-deps = ["AlgebraOfGraphics", "CSV", "CairoMakie", "DataFrames", "OkFiles", "Pkg"]
+deps = ["AlgebraOfGraphics", "CSV", "CairoMakie", "Chain", "DataFrames", "OkFiles", "Pkg"]
 path = "."
 uuid = "b473eb64-b137-4efd-a9b4-74cb17c049bd"
 version = "0.0.0"
