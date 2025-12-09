@@ -19,8 +19,10 @@ end
 function main()
 
     for dfi in groupby(df0, :year)
+        year_value = dfi.year |> unique |> only
         eqkmap = data(dfi) * mapping(:lon, :lat; markersize=:ML, color=:ML, layout=:month) * visual(Scatter; strokewidth=0.1, strokecolor=:white)
         fig = draw(eqkmap; figure=(; size=(1500, 1500)))
+        Label(fig.figure[0, :], "Year: $year_value", fontsize=30, font=:bold, tellwidth=false)
         display(fig)
     end
 
