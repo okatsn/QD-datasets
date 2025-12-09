@@ -17,7 +17,11 @@ df0 = @chain raws begin
 end
 
 function main()
-    eqkmap = data(df0) * mapping(:lon, :lat; markersize=:ML, color=:ML, layout=:year) * visual(Scatter; strokewidth=0.1, strokecolor=:white)
-    draw(eqkmap; figure=(; size=(1500, 1500)))
+
+    for dfi in groupby(df0, :year)
+        eqkmap = data(dfi) * mapping(:lon, :lat; markersize=:ML, color=:ML, layout=:month) * visual(Scatter; strokewidth=0.1, strokecolor=:white)
+        fig = draw(eqkmap; figure=(; size=(1500, 1500)))
+        display(fig)
+    end
 
 end
