@@ -21,6 +21,7 @@ month_labels(months) = [m => Dates.format(Date(2000, m, 1), "u") for m in months
 
 function main()
 
+    # Scatter plot for spatial distribution
     for dfi in groupby(df0, :year)
         year_value = dfi.year |> unique |> only
         eqkmap = data(dfi) * mapping(:lon, :lat; markersize=:ML, color=:ML, layout=:month) * visual(Scatter; strokewidth=0.1, strokecolor=:white)
@@ -35,6 +36,17 @@ function main()
         display(fig)
     end
 
+    # Prepare intermediate table for heatmap
+    df_heat = @chain df0 begin
+        transform(:ML => ByRow(x -> floor(x / 0.5) * 0.5) => :ML_level)
+        groupby([:year, :month, :ML_level])
+        combine(nrow => :count)
+    end
+
+    magheat = data(df0) * mapping(:epochday, :ML) * visual(Heatmap)
+
 end
+
+
 
 main()
