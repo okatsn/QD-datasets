@@ -13,3 +13,8 @@ df0 = @chain raws begin
     reduce(vcat, _)
     transform!(:date => ByRow(x -> (year=year(x), month=month(x))) => AsTable)
 end
+
+function main()
+    eqkmap = data(df0) * mapping(:lon, :lat; markersize=:ML, color=:date) * visual(Scatter) |> draw
+
+end
