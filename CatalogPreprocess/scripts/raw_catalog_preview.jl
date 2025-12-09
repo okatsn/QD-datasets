@@ -38,7 +38,7 @@ function main()
 
     # Prepare intermediate table for heatmap
     df_heat = @chain df0 begin
-        transform(:ML => ByRow(x -> floor(x / 0.5) * 0.5) => :ML_level)
+        transform(:ML => ByRow(mllevel(0.5)) => :ML_level)
         groupby([:year, :month, :ML_level])
         combine(nrow => :count)
     end
