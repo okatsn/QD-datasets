@@ -17,8 +17,7 @@ df0 = @chain raws begin
 end
 
 # Create month name mapping function
-const month_labels = months -> [m => Dates.format(Date(2000, m, 1), "u") for m in months]
-
+month_labels(months) = [m => Dates.format(Date(2000, m, 1), "u") for m in months]
 
 function main()
 
@@ -27,12 +26,15 @@ function main()
         eqkmap = data(dfi) * mapping(:lon, :lat; markersize=:ML, color=:ML, layout=:month) * visual(Scatter; strokewidth=0.1, strokecolor=:white)
 
 
-        fig = draw(eqkmap;
-            figure=(; size=(1500, 1500)),
-            scales(Layout=(; categories=month_labels)))
+
+        fig = draw(eqkmap,
+            scales(Layout=(; categories=month_labels));
+            figure=(; size=(1500, 1500)))
 
         Label(fig.figure[0, :], "Year: $year_value", fontsize=30, font=:bold, tellwidth=false)
         display(fig)
     end
 
 end
+
+main()
