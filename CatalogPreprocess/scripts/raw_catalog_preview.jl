@@ -5,7 +5,9 @@ using AlgebraOfGraphics
 using CatalogPreprocess
 using Chain
 using Dates
+using Shapefile
 
+twshp = Shapefile.Table("data/map/Taiwan/COUNTY_MOI.shp")
 raws = filelist(r"catalog.*\.csv$", dir_data_raw())
 
 df0 = @chain raws begin
