@@ -7,7 +7,7 @@ using Chain
 using Dates
 using Shapefile
 
-twshp = Shapefile.Table("data/map/Taiwan/COUNTY_MOI.shp")
+twshp = Shapefile.Table(dir_data("map/Taiwan/COUNTY_MOI.shp"))
 raws = filelist(r"catalog.*\.csv$", dir_data_raw())
 
 df0 = @chain raws begin
@@ -24,13 +24,19 @@ month_labels(months) = [m => Dates.format(Date(2000, m, 1), "u") for m in months
 function main()
 
     # Scatter plot for spatial distribution
+    # dfi = [dfi for dfi in groupby(df0, :year)][1]
     for dfi in groupby(df0, :year)
         year_value = dfi.year |> unique |> only
         eqkmap = data(dfi) * mapping(:lon, :lat; markersize=:ML, color=:ML, layout=:month) * visual(Scatter; strokewidth=0.1, strokecolor=:white)
 
 
+        twmap = data(twshp) * mapping(:geometry) * visual(
+                    Choropleth,
+                    color=:white, linestyle=:solid, strokecolor=:turquoise2,
+                    strokewidth=0.75,
+                )
 
-        fig = draw(eqkmap,
+        fig = draw(twmap + eqkmap,
             scales(Layout=(; categories=month_labels));
             figure=(; size=(1500, 1500)))
 
