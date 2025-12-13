@@ -22,8 +22,8 @@ end
 month_labels(months) = [m => Dates.format(Date(2000, m, 1), "u") for m in months]
 
 # transform ML
-mlforward(x) = 10^x
-mlinverse(x) = log10(x)
+mlforward(x) = 1.5^x
+mlinverse(x) = log(1.5, x)  # or equivalently: log(x) / log(1.5)
 mlsizerange = (2, 30)
 
 function main()
@@ -46,7 +46,7 @@ function main()
             scales(
                 Layout=(; categories=month_labels),
                 MarkerSize=(;
-                    sizerange=mlsizerange,
+                    # sizerange=mlsizerange,
                     ticks=[mlforward(i) for i in 1:7],  # Transformed values for tick positions
                     tickformat=values -> string.(mlinverse.(values))  # Display as original ML values
                 ), # Rescale marker size in `sizerange`
