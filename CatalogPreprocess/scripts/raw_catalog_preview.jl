@@ -47,7 +47,8 @@ function main()
                 Layout=(; categories=month_labels),
                 MarkerSize=(;
                     sizerange=mlsizerange,
-                    # tickformat=x -> "$(log10.(x))"
+                    ticks=[mlforward(i) for i in 1:7],  # Transformed values for tick positions
+                    tickformat=values -> string.(mlinverse.(values))  # Display as original ML values
                 ), # Rescale marker size in `sizerange`
             );
             axis=(; aspect=AxisAspect(1)),
