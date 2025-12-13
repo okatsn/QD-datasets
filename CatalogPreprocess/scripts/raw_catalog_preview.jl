@@ -37,7 +37,10 @@ function main()
                 )
 
         fig = draw(eqkmap + twmap,
-            scales(Layout=(; categories=month_labels));
+            scales(
+                Layout=(; categories=month_labels),
+                MarkerSize=(; sizerange=(0.1, 15)), # Rescale marker size in `sizerange`
+            );
             axis=(; aspect=AxisAspect(1)),
             figure=(; size=(1500, 1500)))
 
