@@ -21,13 +21,19 @@ end
 # Create month name mapping function
 month_labels(months) = [m => Dates.format(Date(2000, m, 1), "u") for m in months]
 
+# transform ML
+mlforward(x) = 10^x
+mlinverse(x) = log10(x)
+mlsizerange = (2, 30)
+
 function main()
 
     # Scatter plot for spatial distribution
     # dfi = [dfi for dfi in groupby(df0, :year)][1]
     for dfi in groupby(df0, :year)
         year_value = dfi.year |> unique |> only
-        eqkmap = data(dfi) * mapping(:lon, :lat; markersize=:ML, color=:ML, layout=:month) * visual(Scatter; strokewidth=0.1, strokecolor=:white)
+        eqkmap = data(dfi) * mapping(:lon, :lat;
+                     markersize=:ML => mlforward => "ML", color=:ML, layout=:month) * visual(Scatter; strokewidth=0.1, strokecolor=:white)
 
 
         twmap = data(twshp) * mapping(:geometry) * visual(
@@ -39,7 +45,10 @@ function main()
         fig = draw(eqkmap + twmap,
             scales(
                 Layout=(; categories=month_labels),
-                MarkerSize=(; sizerange=(0.1, 15)), # Rescale marker size in `sizerange`
+                MarkerSize=(;
+                    sizerange=mlsizerange,
+                    # tickformat=x -> "$(log10.(x))"
+                ), # Rescale marker size in `sizerange`
             );
             axis=(; aspect=AxisAspect(1)),
             figure=(; size=(1500, 1500)))
