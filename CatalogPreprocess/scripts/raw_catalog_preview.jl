@@ -32,11 +32,11 @@ function main()
 
         twmap = data(twshp) * mapping(:geometry) * visual(
                     Choropleth,
-                    color=:white, linestyle=:solid, strokecolor=:turquoise2,
+                    color=(:white, 0), linestyle=:solid, strokecolor=:turquoise2,
                     strokewidth=0.75,
                 )
 
-        fig = draw(twmap + eqkmap,
+        fig = draw(eqkmap + twmap,
             scales(Layout=(; categories=month_labels));
             axis=(; aspect=AxisAspect(1)),
             figure=(; size=(1500, 1500)))
