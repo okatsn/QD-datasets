@@ -38,6 +38,7 @@ function main()
 
         fig = draw(twmap + eqkmap,
             scales(Layout=(; categories=month_labels));
+            axis=(; aspect=AxisAspect(1)),
             figure=(; size=(1500, 1500)))
 
         Label(fig.figure[0, :], "Year: $year_value", fontsize=30, font=:bold, tellwidth=false)
