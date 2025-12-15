@@ -47,6 +47,7 @@ function main()
         mmax = dfi.ML |> maximum |> floor
         fig = draw(eqkmap + twmap,
             scales(
+                Color=(; colormap=:darktest),
                 Layout=(; categories=month_labels),
                 MarkerSize=(;
                     sizerange=mlsizerange,
