@@ -26,7 +26,7 @@ month_labels(months) = [m => Dates.format(Date(2000, m, 1), "u") for m in months
 scaling_exponent = 2
 mlforward(x) = scaling_exponent^x
 mlinverse(y) = log(scaling_exponent, y)  # or equivalently: log(x) / log(scaling_exponent)
-mlsizerange = (1, 40) # AoG normalize marker size within this range (default to (5,20))
+mlsizerange = (1, 35) # AoG normalize marker size within this range (default to (5,20))
 
 # Global ML limits to keep color and marker size consistent across yearly figures
 ml_min = floor(Int, minimum(df0.ML))
@@ -38,7 +38,8 @@ ml_max = ceil(Int, ml_max_data)
 markersize_ticks = let
     base = mlforward.(ml_min:floor(Int, ml_max_data))
     top = mlforward(ml_max_data)
-    sort(unique(vcat(base, top)))
+    sort(base)
+    # sort(unique(vcat(base, top))) # with an additional marker for largest earthquake.
 end
 
 function main()
@@ -49,7 +50,7 @@ function main()
     months = 1:12
 
     # Facet key used for both layers so the Taiwan basemap is drawn in every panel.
-    year_month_levels = [(y, m) for y in years for m in months]
+    year_month_levels = [(y, m) for y in years for m in months] # This is more robust than deriving levels from unique(df0.year_month).
 
     # Duplicate shapefile rows across facets (small: counties × 12 × years).
     twbase = DataFrame(twshp)
@@ -97,7 +98,7 @@ function main()
             pag,
             i;
             axis=(; aspect=AxisAspect(1)),
-            figure=(; size=(1500, 1500)),
+            figure=(; size=(1200, 1000)),
         )
         Label(fig.figure[0, :], "Year: $year_value", fontsize=30, font=:bold, tellwidth=false)
         display(fig)
