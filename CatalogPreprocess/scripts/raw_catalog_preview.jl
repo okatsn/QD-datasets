@@ -15,6 +15,7 @@ df0 = @chain raws begin
     reduce(vcat, _)
     transform!(:date => ByRow(x -> (year=year(x), month=month(x))) => AsTable)
     transform!(:date => ByRow(Dates.date2epochdays) => :epochday)
+    transform!([:year, :month] => ByRow(tuple) => :year_month)
     sort!(:ML, rev=true) # ensure small event on top
 end
 
@@ -27,37 +28,77 @@ mlforward(x) = scaling_exponent^x
 mlinverse(y) = log(scaling_exponent, y)  # or equivalently: log(x) / log(scaling_exponent)
 mlsizerange = (1, 40) # AoG normalize marker size within this range (default to (5,20))
 
+# Global ML limits to keep color and marker size consistent across yearly figures
+ml_min = floor(Int, minimum(df0.ML))
+ml_max_data = maximum(df0.ML)
+ml_max = ceil(Int, ml_max_data)
+
+# MarkerSize ticks must be within the data range of the scale.
+# If we use `ceil(maximum(ML))` we can easily create a tick that exceeds the actual data extrema.
+markersize_ticks = let
+    base = mlforward.(ml_min:floor(Int, ml_max_data))
+    top = mlforward(ml_max_data)
+    sort(unique(vcat(base, top)))
+end
+
 function main()
 
     # Scatter plot for spatial distribution
-    # dfi = [dfi for dfi in groupby(df0, :year)][1]
-    for dfi in groupby(df0, :year)
-        year_value = dfi.year |> unique |> only
-        eqkmap = data(dfi) * mapping(:lon, :lat;
-                     markersize=:ML => mlforward => "ML", color=:ML, layout=:month) * visual(Scatter; strokewidth=0.1, strokecolor=:white)
+    # Use figure-level pagination so scales are fit globally (across all years) and each page is a year.
+    years = sort(unique(df0.year))
+    months = 1:12
 
+    # Facet key used for both layers so the Taiwan basemap is drawn in every panel.
+    year_month_levels = [(y, m) for y in years for m in months]
 
-        twmap = data(twshp) * mapping(:geometry) * visual(
-                    Choropleth,
-                    color=(:white, 0), linestyle=:solid, strokecolor=:turquoise2,
-                    strokewidth=0.75,
-                )
+    # Duplicate shapefile rows across facets (small: counties × 12 × years).
+    twbase = DataFrame(twshp)
+    n_map = nrow(twbase)
+    twdf = repeat(twbase, outer=length(year_month_levels))
+    twdf.year_month = repeat(year_month_levels, inner=n_map)
 
-        mmin = dfi.ML |> minimum |> ceil
-        mmax = dfi.ML |> maximum |> floor
-        fig = draw(eqkmap + twmap,
-            scales(
-                Color=(; colormap=:darktest),
-                Layout=(; categories=month_labels),
-                MarkerSize=(;
-                    sizerange=mlsizerange,
-                    ticks=[mlforward(i) for i in mmin:mmax], # Transformed values for tick positions. AoG check if any tick is outside the scale extrema.
-                    tickformat=values -> string.(round.(mlinverse.(values)))  # Display as original ML values
-                ), # Rescale marker size in `sizerange`
-            );
+    eqkmap = data(df0) * mapping(:lon, :lat;
+                 markersize=:ML => mlforward => "ML",
+                 color=:ML,
+                 layout=:year_month,
+             ) * visual(Scatter; strokewidth=0.1, strokecolor=:white)
+
+    twmap = data(twdf) * mapping(:geometry, layout=:year_month) * visual(
+                Choropleth,
+                color=(:white, 0),
+                linestyle=:solid,
+                strokecolor=:turquoise2,
+                strokewidth=0.75,
+            )
+
+    scl = scales(
+        Color=(;
+            colormap=:darktest,
+            colorrange=(ml_min, ml_max), # fixes data → color mapping across pages
+        ),
+        MarkerSize=(;
+            sizerange=mlsizerange,
+            ticks=markersize_ticks, # transformed tick positions
+            tickformat=values -> string.(round.(mlinverse.(values); digits=1)),
+        ),
+        Layout=(;
+            # Keep month panels fixed (12 per year) and label by month only.
+            categories=year_month_levels .=> Dates.format.(Date.(2000, last.(year_month_levels), 1), "u"),
+            palette=wrapped(cols=4),
+        ),
+    )
+
+    # One page per year: 12 (year, month) facets per page, ordered by year then month.
+    pag = paginate(eqkmap + twmap, scl; layout=12)
+
+    # (i, year_value) = [(i, year_value) for (i, year_value) in enumerate(years)][14]
+    for (i, year_value) in enumerate(years)
+        fig = draw(
+            pag,
+            i;
             axis=(; aspect=AxisAspect(1)),
-            figure=(; size=(1500, 1500)))
-
+            figure=(; size=(1500, 1500)),
+        )
         Label(fig.figure[0, :], "Year: $year_value", fontsize=30, font=:bold, tellwidth=false)
         display(fig)
     end
