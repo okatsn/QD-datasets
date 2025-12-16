@@ -27,6 +27,11 @@ mlforward(x) = scaling_exponent^x
 mlinverse(y) = log(scaling_exponent, y)  # or equivalently: log(x) / log(scaling_exponent)
 mlsizerange = (1, 40) # AoG normalize marker size within this range (default to (5,20))
 
+# Global ML limits to keep color and marker size consistent across yearly figures
+ml_min = df0.ML |> minimum |> floor
+ml_max = df0.ML |> maximum |> ceil
+markersize_ticks = mlforward.(ml_min:ml_max)
+
 function main()
 
     # Scatter plot for spatial distribution
@@ -47,11 +52,14 @@ function main()
         mmax = dfi.ML |> maximum |> floor
         fig = draw(eqkmap + twmap,
             scales(
-                Color=(; colormap=:darktest),
+                Color=(;
+                    colormap=:darktest,
+                    colorrange=(ml_min, ml_max) # `colorrange` fixes the mapping of data → colors. By default each draw computes its own extrema
+                ),
                 Layout=(; categories=month_labels),
                 MarkerSize=(;
                     sizerange=mlsizerange,
-                    ticks=[mlforward(i) for i in mmin:mmax], # Transformed values for tick positions. AoG check if any tick is outside the scale extrema.
+                    ticks=markersize_ticks, # Transformed values for tick positions. AoG check if any tick is outside the scale extrema.
                     tickformat=values -> string.(round.(mlinverse.(values)))  # Display as original ML values
                 ), # Rescale marker size in `sizerange`
             );
