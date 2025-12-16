@@ -15,6 +15,7 @@ df0 = @chain raws begin
     reduce(vcat, _)
     transform!(:date => ByRow(x -> (year=year(x), month=month(x))) => AsTable)
     transform!(:date => ByRow(Dates.date2epochdays) => :epochday)
+    transform!([:year, :month] => ByRow(tuple) => :year_month)
     sort!(:ML, rev=true) # ensure small event on top
 end
 
@@ -47,14 +48,22 @@ function main()
     years = sort(unique(df0.year))
     months = 1:12
 
+    # Facet key used for both layers so the Taiwan basemap is drawn in every panel.
+    year_month_levels = [(y, m) for y in years for m in months]
+
+    # Duplicate shapefile rows across facets (small: counties × 12 × years).
+    twbase = DataFrame(twshp)
+    n_map = nrow(twbase)
+    twdf = repeat(twbase, outer=length(year_month_levels))
+    twdf.year_month = repeat(year_month_levels, inner=n_map)
+
     eqkmap = data(df0) * mapping(:lon, :lat;
                  markersize=:ML => mlforward => "ML",
                  color=:ML,
-                 row=:year,
-                 col=:month,
+                 layout=:year_month,
              ) * visual(Scatter; strokewidth=0.1, strokecolor=:white)
 
-    twmap = data(twshp) * mapping(:geometry) * visual(
+    twmap = data(twdf) * mapping(:geometry, layout=:year_month) * visual(
                 Choropleth,
                 color=(:white, 0),
                 linestyle=:solid,
@@ -72,13 +81,17 @@ function main()
             ticks=markersize_ticks, # transformed tick positions
             tickformat=values -> string.(round.(mlinverse.(values); digits=1)),
         ),
-        Row=(; categories=years, show_labels=false),
-        Col=(; categories=month_labels(months)),
+        Layout=(;
+            # Keep month panels fixed (12 per year) and label by month only.
+            categories=year_month_levels .=> Dates.format.(Date.(2000, last.(year_month_levels), 1), "u"),
+            palette=wrapped(cols=4),
+        ),
     )
 
-    pag = paginate(eqkmap + twmap, scl; row=1)
+    # One page per year: 12 (year, month) facets per page, ordered by year then month.
+    pag = paginate(eqkmap + twmap, scl; layout=12)
 
-    # (i, year_value) = [(i, year_value) for (i, year_value) in enumerate(years)][1]
+    # (i, year_value) = [(i, year_value) for (i, year_value) in enumerate(years)][14]
     for (i, year_value) in enumerate(years)
         fig = draw(
             pag,
