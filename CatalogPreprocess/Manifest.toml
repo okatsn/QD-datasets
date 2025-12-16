@@ -2,7 +2,7 @@
 
 julia_version = "1.12.1"
 manifest_format = "2.0"
-project_hash = "bc023bb4f80b8a3316a8af415232bb8439ae1d9a"
+project_hash = "656f6e699d84bc62d18315721f4f20dfc7013b1c"
 
 [[deps.AbstractFFTs]]
 deps = ["LinearAlgebra"]
@@ -173,7 +173,7 @@ uuid = "83423d85-b0ee-5818-9007-b63ccbeb887a"
 version = "1.18.5+0"
 
 [[deps.CatalogPreprocess]]
-deps = ["AlgebraOfGraphics", "CSV", "CairoMakie", "Chain", "DataFrames", "Dates", "OkFiles", "Pkg"]
+deps = ["AlgebraOfGraphics", "CSV", "CairoMakie", "Chain", "DataFrames", "Dates", "OkFiles", "Pkg", "Shapefile"]
 path = "."
 uuid = "b473eb64-b137-4efd-a9b4-74cb17c049bd"
 version = "0.0.0"
@@ -1034,6 +1034,11 @@ deps = ["Artifacts", "JLLWrappers", "Libdl"]
 git-tree-sha1 = "b6aa4566bb7ae78498a5e68943863fa8b5231b59"
 uuid = "e7412a2a-1a6e-54c0-be00-318e2571c051"
 version = "1.3.6+0"
+
+[[deps.OkAoGTutorials]]
+path = "/home/jovyan/.julia/dev/OkAoGTutorials"
+uuid = "9aefe428-500e-4e3b-8a70-3d1123ddf76f"
+version = "0.1.0"
 
 [[deps.OkFiles]]
 deps = ["Printf", "SFTPClient"]
