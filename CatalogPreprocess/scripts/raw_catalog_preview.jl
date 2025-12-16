@@ -10,15 +10,20 @@ using Shapefile
 twshp = Shapefile.Table(dir_data("map/Taiwan/COUNTY_MOI.shp"))
 raws = filelist(r"catalog.*\.csv$", dir_data_raw())
 
-# CHECKPOINT: you may like to use Epicentral Intensity for marker size.
-# Refer: https://gemini.google.com/app/1403620729024ba4
+df_raw = CSV.read.(raws, DataFrame) |> dfs -> reduce(vcat, dfs)
+max_id = argmax(df_raw.ML)
+max_ML_row = df_raw[max_id, :]
+c1 = 1.1
+c2 = (c1 - 1) * max_ML_row.ML / log10(max_ML_row.depth) # ensure `EpiI == ML` for the largest event.
 
-df0 = @chain raws begin
-    CSV.read.(_, DataFrame)
-    reduce(vcat, _)
+df0 = @chain df_raw begin
+
     transform!(:date => ByRow(x -> (year=year(x), month=month(x))) => AsTable)
     transform!(:date => ByRow(Dates.date2epochdays) => :epochday)
     transform!([:year, :month] => ByRow(tuple) => :year_month)
+    # CHECKPOINT: you may like to use Epicentral Intensity for marker size.
+    # Refer: https://gemini.google.com/app/1403620729024ba4
+    transform!(Cols(:ML, :depth) => ByRow((m, d) -> c1 * m - c2 * log10(d)) => :EpiI) # Epicentral Intensity
     sort!(:ML, rev=true) # ensure small event on top
 end
 
@@ -62,7 +67,7 @@ function main()
     twdf.year_month = repeat(year_month_levels, inner=n_map)
 
     eqkmap = data(df0) * mapping(:lon, :lat;
-                 markersize=:ML => mlforward => "ML",
+                 markersize=:EpiI => mlforward => "Epicenter Intensity",
                  color=:ML,
                  layout=:year_month,
              ) * visual(Scatter; strokewidth=0.1, strokecolor=:white)
@@ -78,7 +83,7 @@ function main()
     scl = scales(
         Color=(;
             colormap=:darktest,
-            colorrange=(ml_min, ml_max), # fixes data → color mapping across pages
+            colorrange=(ml_min, ml_max), # fixes data → color mapping across pages; ensure color consistencies.
         ),
         MarkerSize=(;
             sizerange=mlsizerange,
