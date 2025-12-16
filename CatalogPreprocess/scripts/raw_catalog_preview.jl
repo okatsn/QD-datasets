@@ -10,6 +10,9 @@ using Shapefile
 twshp = Shapefile.Table(dir_data("map/Taiwan/COUNTY_MOI.shp"))
 raws = filelist(r"catalog.*\.csv$", dir_data_raw())
 
+# CHECKPOINT: you may like to use Epicentral Intensity for marker size.
+# Refer: https://gemini.google.com/app/1403620729024ba4
+
 df0 = @chain raws begin
     CSV.read.(_, DataFrame)
     reduce(vcat, _)
@@ -23,9 +26,9 @@ end
 month_labels(months) = [m => Dates.format(Date(2000, m, 1), "u") for m in months]
 
 # transform ML
-scaling_exponent = 2
-mlforward(x) = scaling_exponent^x
-mlinverse(y) = log(scaling_exponent, y)  # or equivalently: log(x) / log(scaling_exponent)
+scaling_base = 3 # `mlforward` calculates a quantity where the area of the marker size reflects the event size, with `scaling_base` defines the ratio between the area for `ML = n` and `n +1`.
+mlforward(x) = sqrt(scaling_base^x) # `sqrt` for calculating the "radius" of the marker from the "size".
+mlinverse(y) = log(scaling_base, y^2)  # or equivalently: log(x) / log(scaling_base)
 mlsizerange = (1, 35) # AoG normalize marker size within this range (default to (5,20))
 
 # Global ML limits to keep color and marker size consistent across yearly figures
