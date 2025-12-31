@@ -22,7 +22,7 @@ col_metadata = Dict(col => Arrow.getmetadata(first_tbl[col]) for col in property
 println("Table metadata: ", tbl_metadata)
 println("Column metadata: ", col_metadata)
 
-df0 = @chain arrow_files begin
+df_all = @chain arrow_files begin
     Arrow.Table.(_)
     DataFrame.(_)
     reduce(vcat, _)
@@ -34,6 +34,9 @@ df0 = @chain arrow_files begin
     transform!(:depth => ByRow(d -> floor(Int, d / 10) + 1) => :depth_bin)
     sort!(:mag, rev=true) # ensure small event on top
 end
+
+# Keep only the shallowest depths <= 90 km
+df0 = subset(df_all, :depth_bin => ByRow(x -> x <= 9); view=true)
 
 mag_type = df0.mag_type |> unique |> only
 
