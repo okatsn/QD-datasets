@@ -22,6 +22,11 @@ col_metadata = Dict(col => Arrow.getmetadata(first_tbl[col]) for col in property
 println("Table metadata: ", tbl_metadata)
 println("Column metadata: ", col_metadata)
 
+# Parameter setting
+
+const bin_size = 10
+
+# Processing table
 df_all = @chain arrow_files begin
     Arrow.Table.(_)
     DataFrame.(_)
@@ -30,8 +35,8 @@ df_all = @chain arrow_files begin
     transform!(:time => ByRow(t -> (year=year(t), month=month(t))) => :year_month)
     # Create epochday from time column
     transform!(:time => ByRow(t -> Dates.date2epochdays(Date(t))) => :epochday)
-    # Create depth_bin: 1 for [0,10), 2 for [10,20), etc.
-    transform!(:depth => ByRow(d -> floor(Int, d / 10) + 1) => :depth_bin)
+    # Create depth_bin: 0 for [0,bin_size), ... etc; indicating the "floor" value of that bin.
+    transform!(:depth => ByRow(d -> div(d, bin_size) * bin_size) => :depth_bin)
     sort!(:mag, rev=true) # ensure small event on top
 end
 
