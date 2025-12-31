@@ -125,12 +125,14 @@ function main()
 
     # Prepare intermediate table for heatmap
     df_heat = @chain df0 begin
-        transform(:ML => ByRow(mllevel(0.5)) => :ML_level)
-        groupby([:year, :month, :ML_level])
+        transform(:mag => ByRow(mllevel(0.5)) => :mag_level)
+        transform(:year_month => ByRow(ym -> ym.year) => :year)
+        transform(:year_month => ByRow(ym -> ym.month) => :month)
+        groupby([:year, :month, :mag_level])
         combine(nrow => :count)
     end
 
-    magheat = data(df0) * mapping(:epochday, :ML) * visual(Heatmap)
+    magheat = data(df0) * mapping(:epochday, :mag) * visual(Heatmap)
 
 end
 
