@@ -26,10 +26,13 @@ df0 = @chain arrow_files begin
     Arrow.Table.(_)
     DataFrame.(_)
     reduce(vcat, _)
-    transform!(:date => ByRow(x -> (year=year(x), month=month(x))) => AsTable)
-    transform!(:date => ByRow(Dates.date2epochdays) => :epochday)
-    transform!([:year, :month] => ByRow(tuple) => :year_month)
-    sort!(:ML, rev=true) # ensure small event on top
+    # Create year_month as NamedTuple from time column
+    transform!(:time => ByRow(t -> (year=year(t), month=month(t))) => :year_month)
+    # Create epochday from time column
+    transform!(:time => ByRow(t -> Dates.date2epochdays(Date(t))) => :epochday)
+    # Create depth_bin: 1 for [0,10), 2 for [10,20), etc.
+    transform!(:depth => ByRow(d -> floor(Int, d / 10) + 1) => :depth_bin)
+    sort!(:mag, rev=true) # ensure small event on top
 end
 
 # Create month name mapping function
