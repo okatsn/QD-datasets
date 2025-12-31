@@ -139,3 +139,5 @@ for group in grouped
         colmetadata=col_metadata,
         dictencode=true
     )
+end
+println("\n✓ Processing complete! Data written to $arrow_base")
