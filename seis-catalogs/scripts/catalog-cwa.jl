@@ -46,7 +46,7 @@ end
 
 df_transformed = @chain df_raw begin
     # Combine date and time into a single DateTime column
-    transform([:date, :time] => ByRow((d, t) -> DateTime(d) + t) => :time)
+    transform([:date, :time] => ByRow((d, t) -> d + t) => :time)
 
     # Map 'fixed' column: "X" -> true (fixed), "F" -> false (free)
     transform(:fixed => ByRow(x -> x == "X") => :is_depth_fixed)
