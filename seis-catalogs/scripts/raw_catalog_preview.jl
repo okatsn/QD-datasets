@@ -139,6 +139,77 @@ function main()
 
 end
 
+"""
+Create figures sliced by depth_bin (1 to 9) for each year.
+Each panel shows earthquakes at a specific depth range: depth_bin=1 → [0,10) km, depth_bin=2 → [10,20) km, etc.
+"""
+function main_depth()
+    # Scatter plot for spatial distribution sliced by depth_bin
+    years = sort(unique(getfield.(df0.year_month, :year)))
+    depth_bins = 1:9  # depth_bin 1-9 corresponds to 0-90 km
 
+    # Create year_depth key for faceting
+    year_depth_levels = [(year=y, depth_bin=d) for y in years for d in depth_bins]
+
+    # Add year_depth column to data
+    df_depth = @chain df0 begin
+        transform([:year_month, :depth_bin] => ByRow((ym, db) -> (year=ym.year, depth_bin=db)) => :year_depth)
+    end
+
+    # Duplicate shapefile rows across facets (counties × 9 depth_bins × years)
+    twbase = DataFrame(twshp)
+    n_map = nrow(twbase)
+    twdf_depth = repeat(twbase, outer=length(year_depth_levels))
+    twdf_depth.year_depth = repeat(year_depth_levels, inner=n_map)
+
+    # Depth bin labels: show depth range in km
+    depth_bin_label(d) = "$(10*(d-1))-$(10*d) km"
+
+    eqkmap_depth = data(df_depth) * mapping(:lon, :lat;
+                       markersize=:mag => magforward => mag_type,
+                       color=:mag,
+                       layout=:year_depth,
+                   ) * visual(Scatter; strokewidth=0.1, strokecolor=:white)
+
+    twmap_depth = data(twdf_depth) * mapping(:geometry, layout=:year_depth) * visual(
+                      Choropleth,
+                      color=(:white, 0),
+                      linestyle=:solid,
+                      strokecolor=:turquoise2,
+                      strokewidth=0.75,
+                  )
+
+    scl_depth = scales(
+        Color=(;
+            colormap=:darktest,
+            colorrange=(mag_min, mag_max),
+        ),
+        MarkerSize=(;
+            sizerange=magsizerange,
+            ticks=markersize_ticks,
+            tickformat=values -> string.(round.(maginverse.(values); digits=1)),
+        ),
+        Layout=(;
+            # 9 panels per year (one per depth_bin), labeled by depth range
+            categories=year_depth_levels .=> depth_bin_label.(last.(year_depth_levels)),
+            palette=wrapped(cols=3),  # 3 columns × 3 rows = 9 panels
+        ),
+    )
+
+    # One page per year: 9 depth_bin facets per page
+    pag_depth = paginate(eqkmap_depth + twmap_depth, scl_depth; layout=9)
+
+    for (i, year_value) in enumerate(years)
+        fig = draw(
+            pag_depth,
+            i;
+            axis=(; aspect=AxisAspect(1)),
+            figure=(; size=(1200, 1200)),
+        )
+        Label(fig.figure[0, :], "Year: $year_value (by Depth)", fontsize=30, font=:bold, tellwidth=false)
+        display(fig)
+    end
+end
 
 main()
+main_depth()
