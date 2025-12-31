@@ -8,6 +8,8 @@ using Dates
 using Shapefile
 using Arrow
 
+const DEPTH_BIN_SIZE = 10           # km per depth bin
+const depth_bin = bindepth(10)
 twshp = Shapefile.Table(dir_data("map/Taiwan/COUNTY_MOI.shp"))
 
 # Load Arrow files from data/arrow directory
@@ -36,7 +38,7 @@ df_all = @chain arrow_files begin
     # Create epochday from time column
     transform!(:time => ByRow(t -> Dates.date2epochdays(Date(t))) => :epochday)
     # Create depth_bin: 0 for [0,bin_size), ... etc; indicating the "floor" value of that bin.
-    transform!(:depth => ByRow(d -> div(d, bin_size) * bin_size) => :depth_bin)
+    transform!(:depth => ByRow(depth_bin) => :depth_bin)
     sort!(:mag, rev=true) # ensure small event on top
 end
 
