@@ -69,7 +69,7 @@ function main()
     months = 1:12
 
     # Facet key used for both layers so the Taiwan basemap is drawn in every panel.
-    year_month_levels = [(y, m) for y in years for m in months] # This is more robust than deriving levels from unique(df0.year_month).
+    year_month_levels = [(year=y, month=m) for y in years for m in months] # NamedTuple to match df0.year_month
 
     # Duplicate shapefile rows across facets (small: counties × 12 × years).
     twbase = DataFrame(twshp)
