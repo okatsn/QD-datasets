@@ -10,8 +10,6 @@ using Shapefile
 twshp = Shapefile.Table(dir_data("map/Taiwan/COUNTY_MOI.shp"))
 raws = filelist(r"catalog.*\.csv$", dir_data_raw())
 
-# CHECKPOINT: you may like to use Epicentral Intensity for marker size.
-# Refer: https://gemini.google.com/app/1403620729024ba4
 
 df0 = @chain raws begin
     CSV.read.(_, DataFrame)
