@@ -12,6 +12,7 @@ const DEPTH_BIN_SIZE = 10           # km per depth bin
 const depth_bin = bindepth(10)
 twshp = Shapefile.Table(dir_data("map/Taiwan/COUNTY_MOI.shp"))
 
+dir_eqkmap(args...) = dir_proj("preview", "eqkmap")
 # Load Arrow files from data/arrow directory
 arrow_files = filelistall(r"\.arrow$", dir_data_arrow())
 
@@ -131,6 +132,7 @@ function main()
         )
         Label(fig.figure[0, :], "Year: $year_value", fontsize=30, font=:bold, tellwidth=false)
         display(fig)
+        Makie.save(dir_eqkmap("slice=month_year=$year_value.png"), fig)
     end
 
     # Prepare intermediate table for heatmap
@@ -215,6 +217,7 @@ function main_depth()
         )
         Label(fig.figure[0, :], "Year: $year_value (by Depth)", fontsize=30, font=:bold, tellwidth=false)
         display(fig)
+        Makie.save(dir_eqkmap("slice=depth_year=$year_value.png"), fig)
     end
 end
 
