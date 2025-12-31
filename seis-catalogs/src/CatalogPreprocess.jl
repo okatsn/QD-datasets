@@ -10,4 +10,7 @@ export mllevel
 include("epintensity.jl")
 export epintensity
 
+include("bindepth.jl")
+export bindepth
+
 end
