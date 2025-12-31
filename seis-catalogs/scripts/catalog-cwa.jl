@@ -60,7 +60,7 @@ df_transformed = @chain df_raw begin
     # - "ML" is stored only once and indexed by tiny integers
     # - Maybe adding only a few kB for 1 million rows
     # - This approach allows easy combination with catalog from other sources.
-    transform(:ML => (_ -> "ML") => :mag_type)
+    transform(:ML => ByRow(x -> "ML") => :mag_type)
 
     # Convert error columns to Float32
     transform(:trms => ByRow(Float32) => :rms)
