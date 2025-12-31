@@ -7,4 +7,7 @@ export dir_data, dir_data_intermediate, dir_data_raw, dir_data_catalogs, dir_pro
 include("mllevel.jl")
 export mllevel
 
+include("epintensity.jl")
+export epintensity
+
 end
