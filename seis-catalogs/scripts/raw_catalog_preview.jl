@@ -12,6 +12,7 @@ using Arrow
 # Parameter Settings
 # ============================================================================
 const DEPTH_BIN_SIZE = 10           # km per depth bin
+const depth_bin = bindepth(10)
 const MAX_DEPTH = 90                # maximum depth to include (km)
 const SCALING_BASE = 3              # ratio between marker area for mag n and n+1
 const MARKER_SIZE_RANGE = (1, 35)   # AoG normalize marker size within this range
@@ -53,7 +54,7 @@ df_all = @chain arrow_files begin
     transform!(:time => ByRow(t -> (year=year(t), month=month(t))) => :year_month)
     transform!(:time => ByRow(t -> Dates.date2epochdays(Date(t))) => :epochday)
     # depth_bin: floor value of that bin (e.g., 0 for [0,10), 10 for [10,20), etc.)
-    transform!(:depth => ByRow(d -> div(d, DEPTH_BIN_SIZE) * DEPTH_BIN_SIZE) => :depth_bin)
+    transform!(:depth => ByRow(depth_bin) => :depth_bin)
     sort!(:mag, rev=true)  # ensure small events plot on top
 end
 
