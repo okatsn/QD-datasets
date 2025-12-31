@@ -10,8 +10,8 @@ stages:
       nfiles: 31
     - path: scripts/catalog-cwa.jl
       hash: md5
-      md5: 71ed85e14fa1f9e569faf2b7bf7e1036
-      size: 5423
+      md5: 2a2b117ef3a0ee68cd6d91edec071111
+      size: 5420
     outs:
     - path: data/arrow
       hash: md5

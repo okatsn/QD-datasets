@@ -133,7 +133,7 @@ tbl_metadata = Dict(
 # ============================================================================
 # 4. Partition by year and write Arrow files
 # ============================================================================
-arrow_base = joinpath(dir_data(), "arrow", "source=cwa")
+arrow_base = joinpath(dir_data_arrow(), "source=cwa")
 
 # Group by year
 grouped = groupby(df_transformed, :year)
