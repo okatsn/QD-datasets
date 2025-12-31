@@ -3,6 +3,7 @@ uuid = "b473eb64-b137-4efd-a9b4-74cb17c049bd"
 
 [deps]
 AlgebraOfGraphics = "cbdf2221-f076-402e-a563-3d30da359d67"
+Arrow = "69666777-d1a9-59fb-9406-91d4454c9d45"
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
 CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
 Chain = "8be319e6-bccf-4806-a6f7-6fae938471bc"
@@ -15,6 +16,7 @@ Shapefile = "8e980c4a-a4fe-5da2-b3a7-4b4b0353a2f4"
 
 [compat]
 AlgebraOfGraphics = "0.11, 0.12"
+Arrow = "2.8.0"
 CSV = "0.10"
 CairoMakie = "0.15"
 Chain = "1.0"
