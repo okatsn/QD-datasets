@@ -18,34 +18,44 @@ end
 # ============================================================================
 # 2. Transform to target schema
 # ============================================================================
+# Note: Transformation is done using Chain.jl's @chain macro.
+# Schema follows AGENTS.md specification:
+#   time (DateTime), lon (Float64), lat (Float64), depth (Float64),
+#   mag (Float32), mag_type (String), is_depth_fixed (Bool), quality (String),
+#   rms (Float32), erh (Float32), erz (Float32)
+
 df_transformed = @chain df_raw begin
     # Combine date and time into a single DateTime column
-    transform(_, [:date, :time] => ((d, t) -> DateTime.(d) .+ t) => :time)
+    transform([:date, :time] => ByRow((d, t) -> DateTime(d) + t) => :time)
 
     # Map 'fixed' column: "X" -> true (fixed), "F" -> false (free)
-    transform(_, :fixed => (x -> x .== "X") => :is_depth_fixed)
+    transform(:fixed => ByRow(x -> x == "X") => :is_depth_fixed)
 
     # Convert ML to Float32 for mag
-    transform(_, :ML => (x -> Float32.(x)) => :mag)
+    transform(:ML => ByRow(Float32) => :mag)
 
-    # Add constant mag_type column
-    transform(_, _ -> fill("ML", nrow(_)) => :mag_type)
+    # Add constant mag_type column (all events use ML scale)
+    transform(:ML => (_ -> "ML") => :mag_type)
 
     # Convert error columns to Float32
-    transform(_, :trms => (x -> Float32.(x)) => :rms)
-    transform(_, :ERH => (x -> Float32.(x)) => :erh)
-    transform(_, :ERZ => (x -> Float32.(x)) => :erz)
+    transform(:trms => ByRow(Float32) => :rms)
+    transform(:ERH => ByRow(Float32) => :erh)
+    transform(:ERZ => ByRow(Float32) => :erz)
 
-    # Add year column for partitioning (extract from time)
-    transform(_, :time => (t -> year.(t)) => :year)
+    # Extract year for partitioning
+    transform(:time => ByRow(year) => :year)
 
     # Select only the columns we need (including year for partitioning)
-    select(_, :time, :lon, :lat, :depth, :mag, :mag_type, :is_depth_fixed, :quality, :rms, :erh, :erz, :year)
+    select(:time, :lon, :lat, :depth, :mag, :mag_type, :is_depth_fixed, :quality, :rms, :erh, :erz, :year)
 end
 
 # ============================================================================
 # 3. Define metadata for Arrow files
 # ============================================================================
+# Arrow.write accepts:
+#   - metadata: table-level metadata (Dict or iterable of string pairs)
+#   - colmetadata: column-level metadata (Dict{Symbol => Dict} of string pairs)
+
 col_metadata = Dict(
     :time => Dict(
         "unit" => "ISO-8601",
@@ -110,14 +120,17 @@ for group in grouped
     year_dir = joinpath(arrow_base, "year=$year_val")
     mkpath(year_dir)
 
-    # Remove the year column before writing (it's encoded in the path)
+    # Remove the year column before writing (partition key is encoded in the path)
     df_to_write = select(group, Not(:year))
 
     # Write Arrow file with metadata
+    # - dictencode=true: enables dictionary encoding for string columns (mag_type, quality)
+    #   This significantly reduces file size for low-cardinality string columns.
     output_path = joinpath(year_dir, "data.arrow")
-    Arrow.write(output_path, df_to_write; metadata=tbl_metadata, colmetadata=col_metadata)
-
-    println("✓ Written $(nrow(df_to_write)) events to $output_path")
-end
-
-println("\n✓ Processing complete! Data written to $arrow_base")
+    Arrow.write(
+        output_path,
+        df_to_write;
+        metadata=tbl_metadata,
+        colmetadata=col_metadata,
+        dictencode=true
+    )
