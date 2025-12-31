@@ -35,25 +35,28 @@ df0 = @chain arrow_files begin
     sort!(:mag, rev=true) # ensure small event on top
 end
 
+mag_type = df0.mag_type |> unique |> only
+
+
 # Create month name mapping function
 month_labels(months) = [m => Dates.format(Date(2000, m, 1), "u") for m in months]
 
-# transform ML
-scaling_base = 3 # `mlforward` calculates a quantity where the area of the marker size reflects the event size, with `scaling_base` defines the ratio between the area for `ML = n` and `n +1`.
-mlforward(x) = sqrt(scaling_base^x) # `sqrt` for calculating the "radius" of the marker from the "size".
-mlinverse(y) = log(scaling_base, y^2)  # or equivalently: log(x) / log(scaling_base)
-mlsizerange = (1, 35) # AoG normalize marker size within this range (default to (5,20))
+# transform mag (magnitude)
+scaling_base = 3 # `magforward` calculates a quantity where the area of the marker size reflects the event size, with `scaling_base` defines the ratio between the area for `mag = n` and `n +1`.
+magforward(x) = sqrt(scaling_base^x) # `sqrt` for calculating the "radius" of the marker from the "size".
+maginverse(y) = log(scaling_base, y^2)  # or equivalently: log(x) / log(scaling_base)
+magsizerange = (1, 35) # AoG normalize marker size within this range (default to (5,20))
 
-# Global ML limits to keep color and marker size consistent across yearly figures
-ml_min = floor(Int, minimum(df0.ML))
-ml_max_data = maximum(df0.ML)
-ml_max = ceil(Int, ml_max_data)
+# Global mag limits to keep color and marker size consistent across yearly figures
+mag_min = floor(Int, minimum(df0.mag))
+mag_max_data = maximum(df0.mag)
+mag_max = ceil(Int, mag_max_data)
 
 # MarkerSize ticks must be within the data range of the scale.
-# If we use `ceil(maximum(ML))` we can easily create a tick that exceeds the actual data extrema.
+# If we use `ceil(maximum(mag))` we can easily create a tick that exceeds the actual data extrema.
 markersize_ticks = let
-    base = mlforward.(ml_min:floor(Int, ml_max_data))
-    top = mlforward(ml_max_data)
+    base = magforward.(mag_min:floor(Int, mag_max_data))
+    top = magforward(mag_max_data)
     sort(base)
     # sort(unique(vcat(base, top))) # with an additional marker for largest earthquake.
 end
@@ -62,7 +65,7 @@ function main()
 
     # Scatter plot for spatial distribution
     # Use figure-level pagination so scales are fit globally (across all years) and each page is a year.
-    years = sort(unique(df0.year))
+    years = sort(unique(getfield.(df0.year_month, :year)))
     months = 1:12
 
     # Facet key used for both layers so the Taiwan basemap is drawn in every panel.
@@ -75,8 +78,8 @@ function main()
     twdf.year_month = repeat(year_month_levels, inner=n_map)
 
     eqkmap = data(df0) * mapping(:lon, :lat;
-                 markersize=:ML => mlforward => "ML",
-                 color=:ML,
+                 markersize=:mag => magforward => mag_type,
+                 color=:mag,
                  layout=:year_month,
              ) * visual(Scatter; strokewidth=0.1, strokecolor=:white)
 
@@ -91,12 +94,12 @@ function main()
     scl = scales(
         Color=(;
             colormap=:darktest,
-            colorrange=(ml_min, ml_max), # fixes data → color mapping across pages
+            colorrange=(mag_min, mag_max), # fixes data → color mapping across pages
         ),
         MarkerSize=(;
-            sizerange=mlsizerange,
+            sizerange=magsizerange,
             ticks=markersize_ticks, # transformed tick positions
-            tickformat=values -> string.(round.(mlinverse.(values); digits=1)),
+            tickformat=values -> string.(round.(maginverse.(values); digits=1)),
         ),
         Layout=(;
             # Keep month panels fixed (12 per year) and label by month only.
