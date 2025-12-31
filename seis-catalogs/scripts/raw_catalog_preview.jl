@@ -1,4 +1,4 @@
-using DataFrames, CSV
+using DataFrames
 using OkFiles
 using CairoMakie
 using AlgebraOfGraphics
@@ -6,13 +6,25 @@ using CatalogPreprocess
 using Chain
 using Dates
 using Shapefile
+using Arrow
 
 twshp = Shapefile.Table(dir_data("map/Taiwan/COUNTY_MOI.shp"))
-raws = filelist(r"catalog.*\.csv$", dir_data_raw())
 
+# Load Arrow files from data/arrow directory
+arrow_files = filelistall(r"\.arrow$", dir_data_arrow())
 
-df0 = @chain raws begin
-    CSV.read.(_, DataFrame)
+# Read Arrow tables and extract metadata from first file
+first_tbl = Arrow.Table(first(arrow_files))
+tbl_metadata = Arrow.getmetadata(first_tbl)
+col_metadata = Dict(col => Arrow.getmetadata(first_tbl[col]) for col in propertynames(first_tbl))
+
+# Print metadata for reference
+println("Table metadata: ", tbl_metadata)
+println("Column metadata: ", col_metadata)
+
+df0 = @chain arrow_files begin
+    Arrow.Table.(_)
+    DataFrame.(_)
     reduce(vcat, _)
     transform!(:date => ByRow(x -> (year=year(x), month=month(x))) => AsTable)
     transform!(:date => ByRow(Dates.date2epochdays) => :epochday)
