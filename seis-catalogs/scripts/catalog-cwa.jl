@@ -10,8 +10,28 @@ using Arrow
 # ============================================================================
 raws = filelist(r"GDMScatalog.*\.csv$", dir_data_raw())
 
+# Define strict column types for CWA catalog
+# Schema: date,time,lat,lon,depth,ML,nstn,dmin,gap,trms,ERH,ERZ,fixed,nph,quality
+cwa_types = Dict(
+    :date => Date,
+    :time => Time,
+    :lat => Float64,
+    :lon => Float64,
+    :depth => Float64,
+    :ML => Float64,
+    :nstn => Int,
+    :dmin => Float64,
+    :gap => Int,
+    :trms => Float64,
+    :ERH => Float64,
+    :ERZ => Float64,
+    :fixed => String,
+    :nph => Int,
+    :quality => String
+)
+
 df_raw = @chain raws begin
-    CSV.read.(_, DataFrame)
+    CSV.read.(_, DataFrame; types=cwa_types, strict=true)
     reduce(vcat, _)
 end
 
