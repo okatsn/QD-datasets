@@ -1,0 +1,20 @@
+schema: '2.0'
+stages:
+  make_arrows:
+    cmd: julia --project=@. 'scripts/catalog-cwa.jl'
+    deps:
+    - path: data/raw
+      hash: md5
+      md5: bdfd34c7e303bfd4289ce1b355987665.dir
+      size: 42372005
+      nfiles: 31
+    - path: scripts/catalog-cwa.jl
+      hash: md5
+      md5: 2a2b117ef3a0ee68cd6d91edec071111
+      size: 5420
+    outs:
+    - path: data/arrow
+      hash: md5
+      md5: a3ee8647eb17699af79c82328192cecd.dir
+      size: 16420654
+      nfiles: 15

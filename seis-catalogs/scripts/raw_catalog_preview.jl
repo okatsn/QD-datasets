@@ -1,4 +1,4 @@
-using DataFrames, CSV
+using DataFrames
 using OkFiles
 using CairoMakie
 using AlgebraOfGraphics
@@ -6,39 +6,57 @@ using CatalogPreprocess
 using Chain
 using Dates
 using Shapefile
+using Arrow
 
 twshp = Shapefile.Table(dir_data("map/Taiwan/COUNTY_MOI.shp"))
-raws = filelist(r"catalog.*\.csv$", dir_data_raw())
 
+# Load Arrow files from data/arrow directory
+arrow_files = filelistall(r"\.arrow$", dir_data_arrow())
 
-df0 = @chain raws begin
-    CSV.read.(_, DataFrame)
+# Read Arrow tables and extract metadata from first file
+first_tbl = Arrow.Table(first(arrow_files))
+tbl_metadata = Arrow.getmetadata(first_tbl)
+col_metadata = Dict(col => Arrow.getmetadata(first_tbl[col]) for col in propertynames(first_tbl))
+
+# Print metadata for reference
+println("Table metadata: ", tbl_metadata)
+println("Column metadata: ", col_metadata)
+
+df0 = @chain arrow_files begin
+    Arrow.Table.(_)
+    DataFrame.(_)
     reduce(vcat, _)
-    transform!(:date => ByRow(x -> (year=year(x), month=month(x))) => AsTable)
-    transform!(:date => ByRow(Dates.date2epochdays) => :epochday)
-    transform!([:year, :month] => ByRow(tuple) => :year_month)
-    sort!(:ML, rev=true) # ensure small event on top
+    # Create year_month as NamedTuple from time column
+    transform!(:time => ByRow(t -> (year=year(t), month=month(t))) => :year_month)
+    # Create epochday from time column
+    transform!(:time => ByRow(t -> Dates.date2epochdays(Date(t))) => :epochday)
+    # Create depth_bin: 1 for [0,10), 2 for [10,20), etc.
+    transform!(:depth => ByRow(d -> floor(Int, d / 10) + 1) => :depth_bin)
+    sort!(:mag, rev=true) # ensure small event on top
 end
+
+mag_type = df0.mag_type |> unique |> only
+
 
 # Create month name mapping function
 month_labels(months) = [m => Dates.format(Date(2000, m, 1), "u") for m in months]
 
-# transform ML
-scaling_base = 3 # `mlforward` calculates a quantity where the area of the marker size reflects the event size, with `scaling_base` defines the ratio between the area for `ML = n` and `n +1`.
-mlforward(x) = sqrt(scaling_base^x) # `sqrt` for calculating the "radius" of the marker from the "size".
-mlinverse(y) = log(scaling_base, y^2)  # or equivalently: log(x) / log(scaling_base)
-mlsizerange = (1, 35) # AoG normalize marker size within this range (default to (5,20))
+# transform mag (magnitude)
+scaling_base = 3 # `magforward` calculates a quantity where the area of the marker size reflects the event size, with `scaling_base` defines the ratio between the area for `mag = n` and `n +1`.
+magforward(x) = sqrt(scaling_base^x) # `sqrt` for calculating the "radius" of the marker from the "size".
+maginverse(y) = log(scaling_base, y^2)  # or equivalently: log(x) / log(scaling_base)
+magsizerange = (1, 35) # AoG normalize marker size within this range (default to (5,20))
 
-# Global ML limits to keep color and marker size consistent across yearly figures
-ml_min = floor(Int, minimum(df0.ML))
-ml_max_data = maximum(df0.ML)
-ml_max = ceil(Int, ml_max_data)
+# Global mag limits to keep color and marker size consistent across yearly figures
+mag_min = floor(Int, minimum(df0.mag))
+mag_max_data = maximum(df0.mag)
+mag_max = ceil(Int, mag_max_data)
 
 # MarkerSize ticks must be within the data range of the scale.
-# If we use `ceil(maximum(ML))` we can easily create a tick that exceeds the actual data extrema.
+# If we use `ceil(maximum(mag))` we can easily create a tick that exceeds the actual data extrema.
 markersize_ticks = let
-    base = mlforward.(ml_min:floor(Int, ml_max_data))
-    top = mlforward(ml_max_data)
+    base = magforward.(mag_min:floor(Int, mag_max_data))
+    top = magforward(mag_max_data)
     sort(base)
     # sort(unique(vcat(base, top))) # with an additional marker for largest earthquake.
 end
@@ -47,11 +65,11 @@ function main()
 
     # Scatter plot for spatial distribution
     # Use figure-level pagination so scales are fit globally (across all years) and each page is a year.
-    years = sort(unique(df0.year))
+    years = sort(unique(getfield.(df0.year_month, :year)))
     months = 1:12
 
     # Facet key used for both layers so the Taiwan basemap is drawn in every panel.
-    year_month_levels = [(y, m) for y in years for m in months] # This is more robust than deriving levels from unique(df0.year_month).
+    year_month_levels = [(year=y, month=m) for y in years for m in months] # NamedTuple to match df0.year_month
 
     # Duplicate shapefile rows across facets (small: counties × 12 × years).
     twbase = DataFrame(twshp)
@@ -60,8 +78,8 @@ function main()
     twdf.year_month = repeat(year_month_levels, inner=n_map)
 
     eqkmap = data(df0) * mapping(:lon, :lat;
-                 markersize=:ML => mlforward => "ML",
-                 color=:ML,
+                 markersize=:mag => magforward => mag_type,
+                 color=:mag,
                  layout=:year_month,
              ) * visual(Scatter; strokewidth=0.1, strokecolor=:white)
 
@@ -76,12 +94,12 @@ function main()
     scl = scales(
         Color=(;
             colormap=:darktest,
-            colorrange=(ml_min, ml_max), # fixes data → color mapping across pages
+            colorrange=(mag_min, mag_max), # fixes data → color mapping across pages
         ),
         MarkerSize=(;
-            sizerange=mlsizerange,
+            sizerange=magsizerange,
             ticks=markersize_ticks, # transformed tick positions
-            tickformat=values -> string.(round.(mlinverse.(values); digits=1)),
+            tickformat=values -> string.(round.(maginverse.(values); digits=1)),
         ),
         Layout=(;
             # Keep month panels fixed (12 per year) and label by month only.
@@ -107,12 +125,14 @@ function main()
 
     # Prepare intermediate table for heatmap
     df_heat = @chain df0 begin
-        transform(:ML => ByRow(mllevel(0.5)) => :ML_level)
-        groupby([:year, :month, :ML_level])
+        transform(:mag => ByRow(mllevel(0.5)) => :mag_level)
+        transform(:year_month => ByRow(ym -> ym.year) => :year)
+        transform(:year_month => ByRow(ym -> ym.month) => :month)
+        groupby([:year, :month, :mag_level])
         combine(nrow => :count)
     end
 
-    magheat = data(df0) * mapping(:epochday, :ML) * visual(Heatmap)
+    magheat = data(df0) * mapping(:epochday, :mag) * visual(Heatmap)
 
 end
 
