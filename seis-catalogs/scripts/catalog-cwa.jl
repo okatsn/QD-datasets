@@ -20,7 +20,8 @@ using Arrow, DataFrames, Dates
 df = DataFrame(
     time=[DateTime(2021, 1, 1, 12, 0, 0)],
     mag=[5.1],
-    mag_type=["ML"]
+    mag_type=["ML"],
+    depth=[1.1]
 )
 
 # 2. Define Column-level Metadata
