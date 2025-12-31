@@ -35,6 +35,11 @@ df_transformed = @chain df_raw begin
     transform(:ML => ByRow(Float32) => :mag)
 
     # Add constant mag_type column (all events use ML scale)
+    # KEYNOTE:
+    # - The cost of adding semantic column is super low
+    # - "ML" is stored only once and indexed by tiny integers
+    # - Maybe adding only a few kB for 1 million rows
+    # - This approach allows easy combination with catalog from other sources.
     transform(:ML => (_ -> "ML") => :mag_type)
 
     # Convert error columns to Float32
