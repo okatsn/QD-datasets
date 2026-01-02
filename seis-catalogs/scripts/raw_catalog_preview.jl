@@ -1,20 +1,30 @@
 using DataFrames
 using OkFiles
 using CairoMakie
+using CairoMakie: FileIO  # Import FileIO from CairoMakie to use explicit format specification
 using AlgebraOfGraphics
 using CatalogPreprocess
 using Chain
 using Dates
 using Shapefile
 using Arrow
+"""
+Helper function to save PNG with explicit format (avoids FileIO.query issues with special characters like '=' in filenames, that it cannot infer the file extension the file name)
+"""
+function save_png(filepath::String, fig)
+    save(FileIO.File{FileIO.format"PNG"}(filepath), fig)
+end
 
-# Parameter setting
 const DEPTH_BIN_SIZE = 10           # km per depth bin
 const depth_bin = bindepth(DEPTH_BIN_SIZE)
 const MAX_DEPTH = 100
 twshp = Shapefile.Table(dir_data("map/Taiwan/COUNTY_MOI.shp"))
 
-dir_eqkmap(args...) = dir_proj("preview", "eqkmap")
+function dir_eqkmap(args...)
+    path = dir_proj("preview", "eqkmap", args...)
+    mkpath(dirname(path))  # Ensure directory exists
+    return path
+end
 # Load Arrow files from data/arrow directory
 arrow_files = filelistall(r"\.arrow$", dir_data_arrow())
 
@@ -131,7 +141,7 @@ function main()
         )
         Label(fig.figure[0, :], "Year: $year_value", fontsize=30, font=:bold, tellwidth=false)
         display(fig)
-        Makie.save(dir_eqkmap("slice=month_year=$year_value.png"), fig)
+        save_png(dir_eqkmap("slice=month_year=$year_value.png"), fig.figure)
     end
 
     # Prepare intermediate table for heatmap
@@ -216,7 +226,7 @@ function main_depth()
         )
         Label(fig.figure[0, :], "Year: $year_value (by Depth)", fontsize=30, font=:bold, tellwidth=false)
         display(fig)
-        Makie.save(dir_eqkmap("slice=depth_year=$year_value.png"), fig)
+        save_png(dir_eqkmap("slice=depth_year=$year_value.png"), fig.figure)
     end
 end
 
