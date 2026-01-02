@@ -26,10 +26,10 @@ stages:
       md5: a3ee8647eb17699af79c82328192cecd.dir
       size: 16420654
       nfiles: 15
-    - path: scripts/catalog-cwa.jl
+    - path: scripts/raw_catalog_preview.jl
       hash: md5
-      md5: 2a2b117ef3a0ee68cd6d91edec071111
-      size: 5420
+      md5: 71da372a16a11268ae8edf68f8b58a08
+      size: 10692
     outs:
     - path: preview/eqkmap
       hash: md5

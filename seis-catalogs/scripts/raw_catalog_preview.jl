@@ -19,21 +19,23 @@ end
 # Parameter Settings
 # ============================================================================
 const DEPTH_BIN_SIZE = 10           # km per depth bin
-const depth_bin = bindepth(10)
-const MAX_DEPTH = 90                # maximum depth to include (km)
+const MAX_DEPTH = 100                # maximum depth to include (km)
 const SCALING_BASE = 3              # ratio between marker area for mag n and n+1
 const MARKER_SIZE_RANGE = (1, 35)   # AoG normalize marker size within this range
 
 # Figure layout parameters
 const MONTHS_PER_YEAR = 12
 const MONTH_COLS = 4                # columns for month-based layout
-const DEPTH_BINS_COUNT = 9          # number of depth bins (0-90 km)
 const DEPTH_COLS = 3                # columns for depth-based layout
 
 # Figure size parameters
 const FIG_SIZE_MONTH = (1200, 1000)
 const FIG_SIZE_DEPTH = (1200, 1200)
 
+# Derived/Dependent parameters
+const depth_bin = bindepth(DEPTH_BIN_SIZE)
+const DEPTH_BINS_COUNT = MAX_DEPTH ÷ DEPTH_BIN_SIZE          # number of depth bins (0-90 km)
+const DEPTH_BINS = range(0; step=DEPTH_BIN_SIZE, length=DEPTH_BINS_COUNT)
 # ============================================================================
 # Data Loading
 # ============================================================================
@@ -163,7 +165,6 @@ const YEAR_MONTH_LABELS = YEAR_MONTH_LEVELS .=> month_label.(last.(YEAR_MONTH_LE
 # ============================================================================
 # Utilities for main_depth() - Depth Bin Facets
 # ============================================================================
-const DEPTH_BINS = range(0; step=DEPTH_BIN_SIZE, length=DEPTH_BINS_COUNT)
 const YEAR_DEPTH_LEVELS = [(year=y, depth_bin=d) for y in YEARS for d in DEPTH_BINS]
 const YEAR_DEPTH_LABELS = YEAR_DEPTH_LEVELS .=> depth_bin_label.(last.(YEAR_DEPTH_LEVELS))
 
