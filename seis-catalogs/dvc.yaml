@@ -9,7 +9,7 @@ stages:
   raw_preview:
     cmd: julia --project=@. 'scripts/raw_catalog_preview.jl'
     deps:
-      - "scripts/catalog-cwa.jl"
+      - "scripts/raw_catalog_preview.jl"
       - "data/arrow"
     outs:
       - "preview/eqkmap"
