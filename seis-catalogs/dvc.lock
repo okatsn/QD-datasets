@@ -28,11 +28,11 @@ stages:
       nfiles: 15
     - path: scripts/raw_catalog_preview.jl
       hash: md5
-      md5: 71da372a16a11268ae8edf68f8b58a08
-      size: 10692
+      md5: ef0d3cf11cd6e73cec1ba5aff621c82b
+      size: 10691
     outs:
     - path: preview/eqkmap
       hash: md5
-      md5: d7de9769c4c5ef7da49892530a425472.dir
-      size: 27627985
+      md5: 013427692a7fdd8519060fc18c051fe1.dir
+      size: 30638202
       nfiles: 30

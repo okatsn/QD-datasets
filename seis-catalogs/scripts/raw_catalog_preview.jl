@@ -19,7 +19,7 @@ end
 # Parameter Settings
 # ============================================================================
 const DEPTH_BIN_SIZE = 10           # km per depth bin
-const MAX_DEPTH = 100                # maximum depth to include (km)
+const MAX_DEPTH = 90                # maximum depth to include (km)
 const SCALING_BASE = 3              # ratio between marker area for mag n and n+1
 const MARKER_SIZE_RANGE = (1, 35)   # AoG normalize marker size within this range
 
