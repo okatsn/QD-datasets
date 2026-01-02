@@ -1,7 +1,7 @@
 {
     "workbench.colorCustomizations": {
-        "titleBar.activeBackground": "#CB3C33",
-        "titleBar.inactiveBackground": "#CB3C33",
+        "titleBar.activeBackground": "#334ccb",
+        "titleBar.inactiveBackground": "#334ccb",
     },
     // Julia
     "julia.executablePath": "/usr/local/bin/julia",
