@@ -10,6 +10,7 @@ using Arrow
 
 const DEPTH_BIN_SIZE = 10           # km per depth bin
 const depth_bin = bindepth(10)
+const MAX_DEPTH = 100
 twshp = Shapefile.Table(dir_data("map/Taiwan/COUNTY_MOI.shp"))
 
 dir_eqkmap(args...) = dir_proj("preview", "eqkmap")
@@ -44,7 +45,7 @@ df_all = @chain arrow_files begin
 end
 
 # Keep only the shallowest depths <= 90 km
-df0 = subset(df_all, :depth_bin => ByRow(x -> x <= 9); view=true)
+df0 = subset(df_all, :depth_bin => ByRow(x -> x < MAX_DEPTH); view=true)
 
 mag_type = df0.mag_type |> unique |> only
 
@@ -155,7 +156,7 @@ Each panel shows earthquakes at a specific depth range: depth_bin=1 → [0,10) k
 function main_depth()
     # Scatter plot for spatial distribution sliced by depth_bin
     years = sort(unique(getfield.(df0.year_month, :year)))
-    depth_bins = 1:9  # depth_bin 1-9 corresponds to 0-90 km
+    depth_bins = df0.depth_bin |> unique .|> Int   # depth_bin 1-9 corresponds to 0-90 km
 
     # Create year_depth key for faceting
     year_depth_levels = [(year=y, depth_bin=d) for y in years for d in depth_bins]
@@ -206,8 +207,8 @@ function main_depth()
     )
 
     # One page per year: 9 depth_bin facets per page
-    pag_depth = paginate(eqkmap_depth + twmap_depth, scl_depth; layout=9)
-
+    pag_depth = paginate(eqkmap_depth + twmap_depth, scl_depth; layout=length(depth_bins))
+    # (i, year_value) = [(i, year_value) for (i, year_value) in enumerate(years)][14]
     for (i, year_value) in enumerate(years)
         fig = draw(
             pag_depth,
