@@ -8,8 +8,9 @@ using Dates
 using Shapefile
 using Arrow
 
+# Parameter setting
 const DEPTH_BIN_SIZE = 10           # km per depth bin
-const depth_bin = bindepth(10)
+const depth_bin = bindepth(DEPTH_BIN_SIZE)
 const MAX_DEPTH = 100
 twshp = Shapefile.Table(dir_data("map/Taiwan/COUNTY_MOI.shp"))
 
@@ -26,9 +27,6 @@ col_metadata = Dict(col => Arrow.getmetadata(first_tbl[col]) for col in property
 println("Table metadata: ", tbl_metadata)
 println("Column metadata: ", col_metadata)
 
-# Parameter setting
-
-const bin_size = 10
 
 # Processing table
 df_all = @chain arrow_files begin
@@ -156,7 +154,7 @@ Each panel shows earthquakes at a specific depth range: depth_bin=1 → [0,10) k
 function main_depth()
     # Scatter plot for spatial distribution sliced by depth_bin
     years = sort(unique(getfield.(df0.year_month, :year)))
-    depth_bins = df0.depth_bin |> unique .|> Int   # depth_bin 1-9 corresponds to 0-90 km
+    depth_bins = df0.depth_bin |> unique |> sort .|> Int   # depth_bin 1-9 corresponds to 0-90 km
 
     # Create year_depth key for faceting
     year_depth_levels = [(year=y, depth_bin=d) for y in years for d in depth_bins]
@@ -173,7 +171,7 @@ function main_depth()
     twdf_depth.year_depth = repeat(year_depth_levels, inner=n_map)
 
     # Depth bin labels: show depth range in km
-    depth_bin_label(d) = "$(10*(d-1))-$(10*d) km"
+    depth_bin_label(d) = "$d-$(d+DEPTH_BIN_SIZE) km"
 
     eqkmap_depth = data(df_depth) * mapping(:lon, :lat;
                        markersize=:mag => magforward => mag_type,
