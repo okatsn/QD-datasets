@@ -1,15 +1,51 @@
 using DataFrames
 using OkFiles
 using CairoMakie
+using CairoMakie: FileIO  # Import FileIO from CairoMakie to use explicit format specification
 using AlgebraOfGraphics
 using CatalogPreprocess
 using Chain
 using Dates
 using Shapefile
 using Arrow
+"""
+Helper function to save PNG with explicit format (avoids FileIO.query issues with special characters like '=' in filenames, that it cannot infer the file extension the file name)
+"""
+function save_png(filepath::String, fig)
+    save(FileIO.File{FileIO.format"PNG"}(filepath), fig)
+end
 
+# ============================================================================
+# Parameter Settings
+# ============================================================================
+const DEPTH_BIN_SIZE = 10           # km per depth bin
+const MAX_DEPTH = 90                # maximum depth to include (km)
+const SCALING_BASE = 3              # ratio between marker area for mag n and n+1
+const MARKER_SIZE_RANGE = (1, 35)   # AoG normalize marker size within this range
+
+# Figure layout parameters
+const MONTHS_PER_YEAR = 12
+const MONTH_COLS = 4                # columns for month-based layout
+const DEPTH_COLS = 3                # columns for depth-based layout
+
+# Figure size parameters
+const FIG_SIZE_MONTH = (1200, 1000)
+const FIG_SIZE_DEPTH = (1200, 1200)
+
+# Derived/Dependent parameters
+const depth_bin = bindepth(DEPTH_BIN_SIZE)
+const DEPTH_BINS_COUNT = MAX_DEPTH ÷ DEPTH_BIN_SIZE          # number of depth bins (0-90 km)
+const DEPTH_BINS = range(0; step=DEPTH_BIN_SIZE, length=DEPTH_BINS_COUNT)
+# ============================================================================
+# Data Loading
+# ============================================================================
 twshp = Shapefile.Table(dir_data("map/Taiwan/COUNTY_MOI.shp"))
 
+function dir_eqkmap(args...)
+    path = dir_proj("preview", "eqkmap", args...)
+    mkpath(dirname(path))  # Ensure directory exists
+    return path
+end
 # Load Arrow files from data/arrow directory
 arrow_files = filelistall(r"\.arrow$", dir_data_arrow())
 
@@ -22,11 +58,9 @@ col_metadata = Dict(col => Arrow.getmetadata(first_tbl[col]) for col in property
 println("Table metadata: ", tbl_metadata)
 println("Column metadata: ", col_metadata)
 
-# Parameter setting
-
-const bin_size = 10
-
-# Processing table
+# ============================================================================
+# Data Processing
+# ============================================================================
 df_all = @chain arrow_files begin
     Arrow.Table.(_)
     DataFrame.(_)
@@ -35,103 +69,153 @@ df_all = @chain arrow_files begin
     transform!(:time => ByRow(t -> (year=year(t), month=month(t))) => :year_month)
     # Create epochday from time column
     transform!(:time => ByRow(t -> Dates.date2epochdays(Date(t))) => :epochday)
-    # Create depth_bin: 0 for [0,bin_size), ... etc; indicating the "floor" value of that bin.
-    transform!(:depth => ByRow(d -> div(d, bin_size) * bin_size) => :depth_bin)
-    sort!(:mag, rev=true) # ensure small event on top
+    # depth_bin: floor value of that bin (e.g., 0 for [0,10), 10 for [10,20), etc.)
+    transform!(:depth => ByRow(depth_bin) => :depth_bin)
+    sort!(:mag, rev=true)  # ensure small events plot on top
 end
 
-# Keep only the shallowest depths <= 90 km
-df0 = subset(df_all, :depth_bin => ByRow(x -> x <= 9); view=true)
+# Filter to shallowest depths
+df0 = subset(df_all, :depth_bin => ByRow(d -> d < MAX_DEPTH); view=true)
 
-mag_type = df0.mag_type |> unique |> only
+# ============================================================================
+# Common Derived Values
+# ============================================================================
+const MAG_TYPE = df0.mag_type |> unique |> only
+const MAG_MIN = floor(Int, minimum(df0.mag))
+const MAG_MAX_DATA = maximum(df0.mag)
+const MAG_MAX = ceil(Int, MAG_MAX_DATA)
+const YEARS = sort(unique(getfield.(df0.year_month, :year)))
 
+# Base shapefile DataFrame (reused for faceting)
+const TWBASE = DataFrame(twshp)
+const N_MAP = nrow(TWBASE)
 
-# Create month name mapping function
-month_labels(months) = [m => Dates.format(Date(2000, m, 1), "u") for m in months]
+# ============================================================================
+# Common Utilities: Magnitude Scaling
+# ============================================================================
+"""
+Transform magnitude to marker size scale.
+Area of marker reflects event size, with SCALING_BASE defining the ratio.
+"""
+magforward(x) = sqrt(SCALING_BASE^x)
 
-# transform mag (magnitude)
-scaling_base = 3 # `magforward` calculates a quantity where the area of the marker size reflects the event size, with `scaling_base` defines the ratio between the area for `mag = n` and `n +1`.
-magforward(x) = sqrt(scaling_base^x) # `sqrt` for calculating the "radius" of the marker from the "size".
-maginverse(y) = log(scaling_base, y^2)  # or equivalently: log(x) / log(scaling_base)
-magsizerange = (1, 35) # AoG normalize marker size within this range (default to (5,20))
+"""Inverse of magforward for tick label formatting."""
+maginverse(y) = log(SCALING_BASE, y^2)
 
-# Global mag limits to keep color and marker size consistent across yearly figures
-mag_min = floor(Int, minimum(df0.mag))
-mag_max_data = maximum(df0.mag)
-mag_max = ceil(Int, mag_max_data)
+# MarkerSize ticks within the data range
+const MARKERSIZE_TICKS = sort(magforward.(MAG_MIN:floor(Int, MAG_MAX_DATA)))
 
-# MarkerSize ticks must be within the data range of the scale.
-# If we use `ceil(maximum(mag))` we can easily create a tick that exceeds the actual data extrema.
-markersize_ticks = let
-    base = magforward.(mag_min:floor(Int, mag_max_data))
-    top = magforward(mag_max_data)
-    sort(base)
-    # sort(unique(vcat(base, top))) # with an additional marker for largest earthquake.
+# ============================================================================
+# Common Utilities: Label Formatters
+# ============================================================================
+"""Format month number to abbreviated name (e.g., 1 → "Jan")."""
+month_label(m::Int) = Dates.format(Date(2000, m, 1), "u")
+
+"""Format depth bin floor value to range string (e.g., 0 → "0-10 km")."""
+depth_bin_label(d) = "$(Int(d))-$(Int(d + DEPTH_BIN_SIZE)) km"
+
+# ============================================================================
+# Common Utilities: Faceting Helpers
+# ============================================================================
+"""
+Create a DataFrame by repeating the base shapefile data for each facet level.
+Returns a DataFrame with the shapefile geometry repeated for each level,
+and a column `facet_col` containing the corresponding level.
+"""
+function repeat_shapefile_for_facets(levels, facet_col::Symbol)
+    df = repeat(TWBASE, outer=length(levels))
+    df[!, facet_col] = repeat(levels, inner=N_MAP)
+    return df
 end
+
+# ============================================================================
+# Shared AoG Visual Settings
+# ============================================================================
+const SCATTER_VISUAL = visual(Scatter; strokewidth=0.1, strokecolor=:white)
+
+const BASEMAP_VISUAL = visual(
+    Choropleth;
+    color=(:white, 0),
+    linestyle=:solid,
+    strokecolor=:turquoise2,
+    strokewidth=0.75,
+)
+
+# ============================================================================
+# Shared AoG Scale Settings
+# ============================================================================
+const COLOR_SCALE = (;
+    colormap=:darktest,
+    colorrange=(MAG_MIN, MAG_MAX),
+)
+
+const MARKERSIZE_SCALE = (;
+    sizerange=MARKER_SIZE_RANGE,
+    ticks=MARKERSIZE_TICKS,
+    tickformat=values -> string.(round.(maginverse.(values); digits=1)),
+)
+
+# ============================================================================
+# Utilities for main() - Monthly Facets
+# ============================================================================
+const MONTHS = 1:MONTHS_PER_YEAR
+const YEAR_MONTH_LEVELS = [(year=y, month=m) for y in YEARS for m in MONTHS]
+const YEAR_MONTH_LABELS = YEAR_MONTH_LEVELS .=> month_label.(last.(YEAR_MONTH_LEVELS))
+
+# ============================================================================
+# Utilities for main_depth() - Depth Bin Facets
+# ============================================================================
+const YEAR_DEPTH_LEVELS = [(year=y, depth_bin=d) for y in YEARS for d in DEPTH_BINS]
+const YEAR_DEPTH_LABELS = YEAR_DEPTH_LEVELS .=> depth_bin_label.(last.(YEAR_DEPTH_LEVELS))
+
+# Precompute df0 with year_depth column for depth faceting
+const DF0_WITH_YEAR_DEPTH = transform(
+    df0,
+    [:year_month, :depth_bin] => ByRow((ym, db) -> (year=ym.year, depth_bin=db)) => :year_depth
+)
+
+# ============================================================================
+# Main Functions
+# ============================================================================
 
 function main()
+    # Prepare shapefile data for month faceting
+    twdf = repeat_shapefile_for_facets(YEAR_MONTH_LEVELS, :year_month)
 
-    # Scatter plot for spatial distribution
-    # Use figure-level pagination so scales are fit globally (across all years) and each page is a year.
-    years = sort(unique(getfield.(df0.year_month, :year)))
-    months = 1:12
-
-    # Facet key used for both layers so the Taiwan basemap is drawn in every panel.
-    year_month_levels = [(year=y, month=m) for y in years for m in months] # NamedTuple to match df0.year_month
-
-    # Duplicate shapefile rows across facets (small: counties × 12 × years).
-    twbase = DataFrame(twshp)
-    n_map = nrow(twbase)
-    twdf = repeat(twbase, outer=length(year_month_levels))
-    twdf.year_month = repeat(year_month_levels, inner=n_map)
-
-    eqkmap = data(df0) * mapping(:lon, :lat;
-                 markersize=:mag => magforward => mag_type,
+    # Build AoG layers
+    eqkmap = data(df0) * mapping(
+                 :lon, :lat;
+                 markersize=:mag => magforward => MAG_TYPE,
                  color=:mag,
                  layout=:year_month,
-             ) * visual(Scatter; strokewidth=0.1, strokecolor=:white)
+             ) * SCATTER_VISUAL
 
-    twmap = data(twdf) * mapping(:geometry, layout=:year_month) * visual(
-                Choropleth,
-                color=(:white, 0),
-                linestyle=:solid,
-                strokecolor=:turquoise2,
-                strokewidth=0.75,
-            )
+    twmap = data(twdf) * mapping(:geometry; layout=:year_month) * BASEMAP_VISUAL
 
-    scl = scales(
-        Color=(;
-            colormap=:darktest,
-            colorrange=(mag_min, mag_max), # fixes data → color mapping across pages
-        ),
-        MarkerSize=(;
-            sizerange=magsizerange,
-            ticks=markersize_ticks, # transformed tick positions
-            tickformat=values -> string.(round.(maginverse.(values); digits=1)),
-        ),
+    scl = scales(;
+        Color=COLOR_SCALE,
+        MarkerSize=MARKERSIZE_SCALE,
         Layout=(;
-            # Keep month panels fixed (12 per year) and label by month only.
-            categories=year_month_levels .=> Dates.format.(Date.(2000, last.(year_month_levels), 1), "u"),
-            palette=wrapped(cols=4),
+            categories=YEAR_MONTH_LABELS,
+            palette=wrapped(cols=MONTH_COLS),
         ),
     )
 
-    # One page per year: 12 (year, month) facets per page, ordered by year then month.
-    pag = paginate(eqkmap + twmap, scl; layout=12)
+    # Paginate: one page per year with 12 month facets
+    pag = paginate(eqkmap + twmap, scl; layout=MONTHS_PER_YEAR)
 
-    # (i, year_value) = [(i, year_value) for (i, year_value) in enumerate(years)][14]
-    for (i, year_value) in enumerate(years)
+    for (i, year_value) in enumerate(YEARS)
         fig = draw(
-            pag,
-            i;
+            pag, i;
             axis=(; aspect=AxisAspect(1)),
-            figure=(; size=(1200, 1000)),
+            figure=(; size=FIG_SIZE_MONTH),
         )
         Label(fig.figure[0, :], "Year: $year_value", fontsize=30, font=:bold, tellwidth=false)
         display(fig)
+        save_png(dir_eqkmap("slice=month_year=$year_value.png"), fig.figure)
     end
 
-    # Prepare intermediate table for heatmap
+    # Prepare intermediate table for heatmap (kept for future use)
     df_heat = @chain df0 begin
         transform(:mag => ByRow(mllevel(0.5)) => :mag_level)
         transform(:year_month => ByRow(ym -> ym.year) => :year)
@@ -141,80 +225,52 @@ function main()
     end
 
     magheat = data(df0) * mapping(:epochday, :mag) * visual(Heatmap)
-
 end
 
 """
-Create figures sliced by depth_bin (1 to 9) for each year.
-Each panel shows earthquakes at a specific depth range: depth_bin=1 → [0,10) km, depth_bin=2 → [10,20) km, etc.
+Create figures sliced by depth_bin for each year.
+Each panel shows earthquakes at a specific depth range.
 """
 function main_depth()
-    # Scatter plot for spatial distribution sliced by depth_bin
-    years = sort(unique(getfield.(df0.year_month, :year)))
-    depth_bins = 1:9  # depth_bin 1-9 corresponds to 0-90 km
+    # Prepare shapefile data for depth faceting
+    twdf_depth = repeat_shapefile_for_facets(YEAR_DEPTH_LEVELS, :year_depth)
 
-    # Create year_depth key for faceting
-    year_depth_levels = [(year=y, depth_bin=d) for y in years for d in depth_bins]
-
-    # Add year_depth column to data
-    df_depth = @chain df0 begin
-        transform([:year_month, :depth_bin] => ByRow((ym, db) -> (year=ym.year, depth_bin=db)) => :year_depth)
-    end
-
-    # Duplicate shapefile rows across facets (counties × 9 depth_bins × years)
-    twbase = DataFrame(twshp)
-    n_map = nrow(twbase)
-    twdf_depth = repeat(twbase, outer=length(year_depth_levels))
-    twdf_depth.year_depth = repeat(year_depth_levels, inner=n_map)
-
-    # Depth bin labels: show depth range in km
-    depth_bin_label(d) = "$(10*(d-1))-$(10*d) km"
-
-    eqkmap_depth = data(df_depth) * mapping(:lon, :lat;
-                       markersize=:mag => magforward => mag_type,
+    # Build AoG layers
+    eqkmap_depth = data(DF0_WITH_YEAR_DEPTH) * mapping(
+                       :lon, :lat;
+                       markersize=:mag => magforward => MAG_TYPE,
                        color=:mag,
                        layout=:year_depth,
-                   ) * visual(Scatter; strokewidth=0.1, strokecolor=:white)
+                   ) * SCATTER_VISUAL
 
-    twmap_depth = data(twdf_depth) * mapping(:geometry, layout=:year_depth) * visual(
-                      Choropleth,
-                      color=(:white, 0),
-                      linestyle=:solid,
-                      strokecolor=:turquoise2,
-                      strokewidth=0.75,
-                  )
+    twmap_depth = data(twdf_depth) * mapping(:geometry; layout=:year_depth) * BASEMAP_VISUAL
 
-    scl_depth = scales(
-        Color=(;
-            colormap=:darktest,
-            colorrange=(mag_min, mag_max),
-        ),
-        MarkerSize=(;
-            sizerange=magsizerange,
-            ticks=markersize_ticks,
-            tickformat=values -> string.(round.(maginverse.(values); digits=1)),
-        ),
+    scl_depth = scales(;
+        Color=COLOR_SCALE,
+        MarkerSize=MARKERSIZE_SCALE,
         Layout=(;
-            # 9 panels per year (one per depth_bin), labeled by depth range
-            categories=year_depth_levels .=> depth_bin_label.(last.(year_depth_levels)),
-            palette=wrapped(cols=3),  # 3 columns × 3 rows = 9 panels
+            categories=YEAR_DEPTH_LABELS,
+            palette=wrapped(cols=DEPTH_COLS),
         ),
     )
 
-    # One page per year: 9 depth_bin facets per page
-    pag_depth = paginate(eqkmap_depth + twmap_depth, scl_depth; layout=9)
-
-    for (i, year_value) in enumerate(years)
+    # Paginate: one page per year with 9 depth_bin facets
+    pag_depth = paginate(eqkmap_depth + twmap_depth, scl_depth; layout=DEPTH_BINS_COUNT)
+    # (i, year_value) = [(i, year_value) for (i, year_value) in enumerate(years)][14]
+    for (i, year_value) in enumerate(YEARS)
         fig = draw(
-            pag_depth,
-            i;
+            pag_depth, i;
             axis=(; aspect=AxisAspect(1)),
-            figure=(; size=(1200, 1200)),
+            figure=(; size=FIG_SIZE_DEPTH),
         )
         Label(fig.figure[0, :], "Year: $year_value (by Depth)", fontsize=30, font=:bold, tellwidth=false)
         display(fig)
+        save_png(dir_eqkmap("slice=depth_year=$year_value.png"), fig.figure)
     end
 end
 
+# ============================================================================
+# Run
+# ============================================================================
 main()
 main_depth()

@@ -6,3 +6,10 @@ stages:
       - "data/raw"
     outs:
       - "data/arrow"
+  raw_preview:
+    cmd: julia --project=@. 'scripts/raw_catalog_preview.jl'
+    deps:
+      - "scripts/raw_catalog_preview.jl"
+      - "data/arrow"
+    outs:
+      - "preview/eqkmap"
