@@ -1,3 +1,8 @@
+# CHECKPOINT: This script is expected to move to another repo:
+# - `QDdatasets` aims for DVC datasets; julia scripts and utilities should be limited to the scope of data generation/update and quick previews only.
+# - `bindepth` is currently used by this script and `raw_catalog_preview.jl`. Consider move it to an independent package if it is going to be widely used across repositories.
+# - `epintensity` is not used anymore.
+# - `mllevel` is currently used by `raw_catalog_preview.jl` only. Consider move it to an independent package if it is going to be widely used across repositories.
 using DataFrames
 using OkFiles
 using CairoMakie
