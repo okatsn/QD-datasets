@@ -1,6 +1,8 @@
 # README
 
 ## CHECKPOINT
+- Data format: Ensure coordinates are consistently in TWD97 (EPSG:3826), or WGS84 (EPSG:4326) for standard Lat/Lon.
+- You may need a layer converting [lat,lon] to a projected coordinate system.
 
 ### Magnitude of Completeness
 
