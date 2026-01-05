@@ -48,7 +48,7 @@ stages:
   # -----------------------------------------------------------------
   cluster_events:
     # Iterates over all arrow files found in data/binned/
-    cmd: julia --project=. src/taskB_cluster.jl --input-dir data/binned/ --out-assign data/assignments/ --out-sites data/sites/ --config params.yaml
+    cmd: julia --project=. src/taskB_cluster.jl --input-dir data/binned/ --out-assign data/assignments/ --out-sites data/centroid_coordinates/ --config params.yaml
     deps:
       - data/binned
       - src/taskB_cluster.jl
@@ -57,16 +57,16 @@ stages:
           - criteria # Contains 'k' (number of clusters) for each criterion tag
     outs:
       - data/assignments
-      - data/sites
+      - data/centroid_coordinates
 
   # -----------------------------------------------------------------
   # Task C: Voronoi Boundaries
   # -----------------------------------------------------------------
   generate_boundaries:
     # Uses sites to draw polygons and clips them to the coastline
-    cmd: julia --project=. src/taskC_boundaries.jl --input-dir data/sites/ --output-dir data/boundaries/ --assets assets/taiwan_coastline.geojson
+    cmd: julia --project=. src/taskC_boundaries.jl --input-dir data/centroid_coordinates/ --output-dir data/boundaries/ --assets assets/taiwan_coastline.geojson
     deps:
-      - data/sites
+      - data/centroid_coordinates
       - assets/taiwan_coastline.geojson
       - src/taskC_boundaries.jl
     outs:

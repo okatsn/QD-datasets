@@ -76,12 +76,12 @@ The pipeline is managed by DVC. Tasks must be atomic.
     * **Goal:** Perform K-Means on each binned subset.
     * **Input:** `data/binned/*.arrow`
     * **Output 1:** `data/assignments/...arrow` (Map: `event_id` -> `cluster_id`)
-    * **Output 2:** `data/sites/...arrow` (Map: `cluster_id` -> `lat`, `lon`)
+    * **Output 2:** `data/centroid_coordinates/...arrow` (Map: `cluster_id` -> `lat`, `lon`)
     * **Note:** $k$ is defined per criterion in `params.yaml`.
 
 * **Task C (Geometry):** `generate_boundaries`
     * **Goal:** Compute Voronoi cells from sites and clip to Taiwan region.
-    * **Input:** `data/sites/*.arrow`, `assets/taiwan_coastline.geojson`
+    * **Input:** `data/centroid_coordinates/*.arrow`, `assets/taiwan_coastline.geojson`
     * **Output:** `data/boundaries/...arrow` (Columns: `cluster_id`, `geometry_wkt`)
 
 ## Data Standards
