@@ -61,18 +61,24 @@ The pipeline is managed by DVC. Tasks must be atomic.
 * **Task 0 (Exploratory):** `magnitude_completeness_analysis`
     * **Goal:** Determine the optimal Magnitude of Completeness ($M_c$).
     * **Output:** Report/Plots (Does not block the pipeline; informs `params.yaml`).
-* **Task A0 (Ingestion):** `add_event_ids`
-    * **Goal:** Convert raw CSV to Arrow and attach unique `event_id`.
-    * **Input:** `raw_catalog.csv`
-    * **Output:** `data/catalog.arrow`
+    * **Method:**
+      * MAXC (Maximum Curvature): Compute a histogram of magnitudes with a bin size of 0.1. The $M_c$​ is simply the bin center with the highest frequency.
+* **Task A0 (Ingestion):**
+    * DVC stage: `ingest_catalog`
+    * **Goal:** Convert raw data to a single Arrow file and attach unique `event_id`.
+    * **Input:** `../data/arrow/source=cwa/**/data.arrow`
+    * **Output:**
+      * a single `catalog.arrow` file with additional unique `event_id` column.
 
 ### Phase 1: Spatial Partitioning
-* **Task A (Binning):** `partition_catalog`
+* **Task A (Binning):**
+    * DVC stage: `partition_catalog`
     * **Goal:** Filter catalog by $M_c$ and split into subsets based on criteria defined in `params.yaml`.
-    * **Input:** `data/catalog.arrow`, `params.yaml`
-    * **Output:** `data/binned/criterion=<tag>_partition=<n>.arrow` (Metadata must include partition info).
+    * **Output:**
+      * `data/binned/criterion=<tag>_partition=<n>.arrow` (Metadata must include partition info).
 
-* **Task B (Clustering):** `compute_clusters`
+* **Task B (Clustering):**
+    * DVC stage: `cluster_events`
     * **Goal:** Perform K-Means on each binned subset.
     * **Input:** `data/binned/*.arrow`
     * **Output 1:** `data/assignments/...arrow` (Map: `event_id` -> `cluster_id`)
