@@ -8,9 +8,11 @@ We use DVC for pipeline management.
 
 ## Coding Standards and Technology Stack
 * **Language:** Julia 1.12+.
-* **Data Format:** Apache Arrow (`Arrow.jl`), DataFrames (`DataFrames.jl`)
+* **Data Format:**
+  * Apache Arrow (`Arrow.jl`), referring github repository `apache/arrow-julia`
+  * DataFrames (`DataFrames.jl`), referring github repo `JuliaData/DataFrames.jl`.
 * **Configuration:** YAML (`YAML.jl`)
-* **Geometry:** `VoronoiCells.jl`, `GeometryBasics.jl`, `LibGEOS.jl`
+* **Geometry:** `VoronoiCells.jl` (referring github repo `JuliaGeometry/VoronoiCells.jl` and `JuliaGeometry/DelaunayTriangulation.jl`), `GeometryBasics.jl` (github repo `JuliaGeometry/GeometryBasics.jl`), `LibGEOS.jl` (github repo `JuliaGeo/LibGEOS.jl`)
 * **Style:** Follow standard Julia style (BlueStyle). Use explicit imports.
 * **I/O:**
     - Read parameters from `params.yaml`.
