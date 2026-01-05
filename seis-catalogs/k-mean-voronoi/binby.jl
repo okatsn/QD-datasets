@@ -28,7 +28,7 @@ CONST_STRATEGIES = Dict(
 
 # 3. Execution (Mockup)
 config = YAML.load_file("params.yaml")
-catalog = Arrow.Table("data/catalog.arrow") |> DataFrame
+catalog = Arrow.Table("data/catalog_all.arrow") |> DataFrame
 
 for (tag, settings) in config["criteria"]
     # Retrieve the function

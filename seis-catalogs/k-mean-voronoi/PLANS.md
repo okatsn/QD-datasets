@@ -48,6 +48,9 @@ Here is the data schema of the catalog for your references:
 
 # PLAN.md
 
+Referring:
+- (Main) https://gemini.google.com/app/482bcb782530fef4
+
 ## Project Overview
 This project builds a hydro-seismicity analysis pipeline for Taiwan. The goal involves creating static "Seismo-Geographic Zones" using Voronoi tessellation on earthquake clusters.
 
@@ -55,35 +58,49 @@ This project builds a hydro-seismicity analysis pipeline for Taiwan. The goal in
 The pipeline is managed by DVC. Tasks must be atomic.
 
 ### Phase 0: Foundation
-* **Task 0 (Exploratory):** `magnitude_completeness_analysis`
-    * **Goal:** Determine the optimal Magnitude of Completeness ($M_c$).
-    * **Output:** Report/Plots (Does not block the pipeline; informs `params.yaml`).
-* **Task A0 (Ingestion):** `add_event_ids`
-    * **Goal:** Convert raw CSV to Arrow and attach unique `event_id`.
-    * **Input:** `raw_catalog.csv`
-    * **Output:** `data/catalog.arrow`
+
+####  Task 0 (Exploratory)
+
+- DVC stage: `analyze_completeness`
+- **Goal:** Determine the optimal Magnitude of Completeness ($M_c$).
+- **Output:** Report/Plots (Does not block the pipeline; informs `params.yaml`).
+- **Method:**
+  * MAXC (Maximum Curvature): Compute a histogram of magnitudes with a bin size of 0.1. The $M_c$​ is simply the bin center with the highest frequency.
+
+#### Task A0 (Ingestion)
+
+- DVC stage: `ingest_catalog`
+- **Goal:** Convert raw data to a single Arrow file and attach unique `event_id`.
+- **Input:** `../data/arrow/source=cwa/**/data.arrow`
+- **Output:**
+      * a single `catalog_all.arrow` file with additional unique `event_id` column.
 
 ### Phase 1: Spatial Partitioning
-* **Task A (Binning):** `partition_catalog`
-    * **Goal:** Filter catalog by $M_c$ and split into subsets based on criteria defined in `params.yaml`.
-    * **Input:** `data/catalog.arrow`, `params.yaml`
-    * **Output:** `data/binned/criterion=<tag>_partition=<n>.arrow` (Metadata must include partition info).
 
-* **Task B (Clustering):** `compute_clusters`
-    * **Goal:** Perform K-Means on each binned subset.
-    * **Input:** `data/binned/*.arrow`
-    * **Output 1:** `data/assignments/...arrow` (Map: `event_id` -> `cluster_id`)
-    * **Output 2:** `data/sites/...arrow` (Map: `cluster_id` -> `lat`, `lon`)
-    * **Note:** $k$ is defined per criterion in `params.yaml`.
+#### Task A (Binning)
 
-* **Task C (Geometry):** `generate_boundaries`
-    * **Goal:** Compute Voronoi cells from sites and clip to Taiwan region.
-    * **Input:** `data/sites/*.arrow`, `assets/taiwan_coastline.geojson`
-    * **Output:** `data/boundaries/...arrow` (Columns: `cluster_id`, `geometry_wkt`)
+- DVC stage: `partition_catalog`
+- **Goal:** Filter catalog by $M_c$ and split into subsets based on `criteria` defined in `params.yaml`.
+- **Output:**
+- `data/binned/criterion=<tag>_partition=<n>.arrow` (Metadata must include partition info).
+
+#### Task B (Clustering)
+
+- DVC stage: `cluster_events`
+- **Goal:** Perform K-Means on each binned subset.
+- **Input:** `data/binned/*.arrow`
+- **Output 1:** `data/cluster_assignments/...arrow` (Map: `event_id` -> `cluster_id`)
+- **Output 2:** `data/centroid_coordinates/...arrow` (Map: `cluster_id` -> `points`)
+
+#### Task C (Geometry)
+
+- DVC stage: `generate_boundaries`
+- **Goal:** Compute Voronoi cells from sites and clip to Taiwan region.
+- **Input:** `data/centroid_coordinates/*.arrow`, `assets/taiwan_coastline.geojson`
+- **Output:** `data/voronoi_boundaries/...arrow` (Columns: `cluster_id`, `geometry`)
 
 ## Data Standards
 * **Format:** All intermediate data must be **Apache Arrow**.
-* **Compression:** LZ4 or Zstd.
 * **Metadata:** Every Arrow file must contain metadata keys describing its `criterion` and `partition`.
 
 ## Parameters (`params.yaml`)

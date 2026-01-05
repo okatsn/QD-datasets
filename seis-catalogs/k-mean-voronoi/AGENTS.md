@@ -7,14 +7,26 @@ We use Julia.
 We use DVC for pipeline management.
 
 ## Coding Standards and Technology Stack
-* **Language:** Julia 1.12+.
-* **Data Format:**
-  * Apache Arrow (`Arrow.jl`), referring github repository `apache/arrow-julia`
-  * DataFrames (`DataFrames.jl`), referring github repo `JuliaData/DataFrames.jl`.
-* **Configuration:** YAML (`YAML.jl`)
-* **Geometry:** `VoronoiCells.jl` (referring github repo `JuliaGeometry/VoronoiCells.jl` and `JuliaGeometry/DelaunayTriangulation.jl`), `GeometryBasics.jl` (github repo `JuliaGeometry/GeometryBasics.jl`), `LibGEOS.jl` (github repo `JuliaGeo/LibGEOS.jl`)
-* **Style:** Follow standard Julia style (BlueStyle). Use explicit imports.
-* **I/O:**
+- **Language:** Julia 1.12+.
+- **Data Format:**
+  - Apache Arrow (`Arrow.jl` in Github repository `apache/arrow-julia`)
+  - DataFrames (`JuliaData/DataFrames.jl`): Standard tabular data handling.
+- **Configuration:** YAML (`YAML.jl`)
+- **Geometry:**
+  - `VoronoiCells.jl` (`JuliaGeometry/VoronoiCells.jl`
+  - `JuliaGeometry/DelaunayTriangulation.jl`)
+  - `GeometryBasics.jl` (`JuliaGeometry/GeometryBasics.jl`), `LibGEOS.jl` (`JuliaGeo/LibGEOS.jl`): For handling the polygon operations (clipping Voronoi cells against the Taiwan coastline).
+  - `GeoInterface.jl` (`JuliaGeo/GeoInterface.jl`)
+  - `GeoTables.jl` (`JuliaEarth/GeoTables.jl`)
+  - `Distances.jl` (`JuliaStats/Distances.jl`): For calculating metric distances if needed.
+- **Clustering:**
+  - `NearestNeighbors.jl` (`KristofferC/NearestNeighbors.jl`)
+  - `Clustering.jl` (`JuliaStats/Clustering.jl`): For kmeans algorithms.
+- **Visualization:**
+  - `GeoMakie.jl` (`MakieOrg/GeoMakie.jl`)
+  - `Makie.jl` (`MakieOrg/Makie.jl`)
+- **Style:** Follow standard Julia style (BlueStyle). Use explicit imports.
+- **I/O:**
     - Read parameters from `params.yaml`.
     - Inputs/Outputs must strictly follow the DVC dependency graph paths provided in the prompt.
     - Always ensure directories exist (`mkpath`) before writing.
@@ -30,7 +42,7 @@ We use DVC for pipeline management.
 
 **Schema Compliance:**
 - **Assignments:** Must contain `event_id` (UInt64/Int64) and `cluster_id` (Int).
-- **Sites:** Must contain `cluster_id`, `lat`, `lon`.
+- **Sites:** Must contain `cluster_id`, `points`.
 - **Boundaries:** Must contain `cluster_id`, `geometry` (WKT String).
 
 ## Coding Guidelines
@@ -41,3 +53,43 @@ We use DVC for pipeline management.
 ## Error Handling
 - Fail fast.
 - Check for empty DataFrames before processing. If a bin is empty, log a warning and exit gracefully (produce an empty output file or skip, depending on instruction).
+
+## Data Schema Definition
+
+Here are the strict schemas to follow.
+
+### Task A0: Ingestion (Source of Truth)
+
+**File:** `data/catalog_all.arrow`
+- **Columns:** All columns from your `../data/arrow/source=cwa/**/data.arrow` **plus**:
+  - `event_id` (`UInt64`): A unique, immutable identifier for every event.
+
+### Task A: Binning
+
+**File:** `data/binned/criterion=<tag>_partition=<n>.arrow`
+- **Columns:**
+  - `event_id`: To link back to the main catalog.
+  - `lat`, `lon`: The only features needed for K-Means.
+  - `depth`: For verification, but strictly not required for 2D K-Means.
+
+**Metadata:** Example: `{"criterion": "depth_iso", "partition": "1", "description": "0-10km"}`
+
+### Task B: Clustering
+
+**File 1 (Traceability):** `data/cluster_assignments/criterion=<tag>_partition=<n>.arrow`
+- **Columns:**
+  - `event_id`
+  - `cluster_id` (a vector of `Int64`): The assigned cluster (1 to $k$).
+
+**File 2 (Geometry Source):** `data/centroid_coordinates/criterion=<tag>_partition=<n>.arrow`
+- **Columns:**
+  - `cluster_id`: The identifier (1 to $k$).
+  - `centroid = (lat, lon)`: The centroid coordinates; a vector of `Tuple{Float64, Float64}`.
+
+#### Task C: The Geometry Boundaries
+
+**File:** `data/voronoi_boundaries/criterion=<tag>_partition=<n>.arrow`
+- **Columns:**
+  - `cluster_id`: Link to the site.
+  - `geometry = (lat, lon)`: WKB format; a vector of `Tuple{Float64, Float64}`.
+    - Note: Ensure the first and last points are identical (closed loop) to satisfy standard GIS requirements.

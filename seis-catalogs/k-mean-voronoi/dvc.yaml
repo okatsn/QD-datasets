@@ -3,40 +3,39 @@ stages:
   # Task 0: Exploratory Analysis (Independent)
   # -----------------------------------------------------------------
   analyze_completeness:
-    cmd: julia --project=. src/task0_completeness.jl
+    cmd: julia --project=. task0_completeness.jl
     deps:
-      - raw_catalog.csv
-      - src/task0_completeness.jl
+      - "../data/arrow/"
+      - task0_completeness.jl
     # These are not cached "outputs" but reports to track changes over time
-    plots:
-      - plots/completeness_analysis.png
     metrics:
-      - metrics/completeness_stats.json
+      - metrics/completeness.json
 
   # -----------------------------------------------------------------
   # Task A0: Ingestion & ID Assignment
   # -----------------------------------------------------------------
   ingest_catalog:
-    cmd: julia --project=. src/taskA0_ingest.jl --input raw_catalog.csv --output data/catalog.arrow
+    cmd: julia --project=. taskA0_ingest.jl
     deps:
-      - raw_catalog.csv
-      - src/taskA0_ingest.jl
+      - "../data/arrow/"
+      - taskA0_ingest.jl
     outs:
-      - data/catalog.arrow
+      - data/catalog_all.arrow
 
   # -----------------------------------------------------------------
   # Task A: Binning / Partitioning
   # -----------------------------------------------------------------
   partition_catalog:
     # The script reads params.yaml to determine how to split the Arrow file
-    cmd: julia --project=. src/taskA_partition.jl --input data/catalog.arrow --output-dir data/binned/ --config params.yaml
+    cmd: julia --project=. taskA_partition.jl
     deps:
-      - data/catalog.arrow
-      - src/taskA_partition.jl
+      - data/catalog_all.arrow
+      - taskA_partition.jl
     params:
       - params.yaml:
           - Mc # If Mc changes, we must re-bin
           - criteria # If definitions (slices) change, we must re-bin
+          - K_means
     outs:
       - data/binned:
           cache: true
@@ -48,26 +47,33 @@ stages:
   # -----------------------------------------------------------------
   cluster_events:
     # Iterates over all arrow files found in data/binned/
-    cmd: julia --project=. src/taskB_cluster.jl --input-dir data/binned/ --out-assign data/assignments/ --out-sites data/sites/ --config params.yaml
+    cmd: julia --project=. taskB_cluster.jl
     deps:
       - data/binned
-      - src/taskB_cluster.jl
+      - taskB_cluster.jl
     params:
       - params.yaml:
-          - criteria # Contains 'k' (number of clusters) for each criterion tag
+          - K_means
     outs:
-      - data/assignments
-      - data/sites
+      - data/cluster_assignments
+      - data/centroid_coordinates
 
   # -----------------------------------------------------------------
   # Task C: Voronoi Boundaries
   # -----------------------------------------------------------------
+  generate_taiwan_coastline:
+    # Load the shape file and extract coastline.
+    cmd: julia --project=. taiwan_coastline.jl
+    deps:
+      - ../data/map/Taiwan
+    outs:
+      - assets/taiwan_coastline.geojson
   generate_boundaries:
     # Uses sites to draw polygons and clips them to the coastline
-    cmd: julia --project=. src/taskC_boundaries.jl --input-dir data/sites/ --output-dir data/boundaries/ --assets assets/taiwan_coastline.geojson
+    cmd: julia --project=. taskC_boundaries.jl
     deps:
-      - data/sites
+      - data/centroid_coordinates
       - assets/taiwan_coastline.geojson
-      - src/taskC_boundaries.jl
+      - taskC_boundaries.jl
     outs:
-      - data/boundaries
+      - data/voronoi_boundaries
