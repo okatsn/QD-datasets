@@ -1,0 +1,21 @@
+# Global Physics Parameters
+Mc: 2.0 # Determined by Task 0
+
+# Binning Strategies
+criteria:
+  # Strategy 1: Standard depth slicing
+  depth_iso:
+    func: "bin_by_depth_edges"
+    k: 20 # Number of clusters for this strategy
+    args: # The edges of the bins
+      - 0
+      - 10
+      - 30
+      - 300
+
+  # Strategy 2: Deep vs Shallow (Simple boolean split)
+  crustal_split:
+    func: "bin_by_boolean_filter"
+    k: 15
+    args:
+      cutoff: 15.0

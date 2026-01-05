@@ -1,0 +1,73 @@
+stages:
+  # -----------------------------------------------------------------
+  # Task 0: Exploratory Analysis (Independent)
+  # -----------------------------------------------------------------
+  analyze_completeness:
+    cmd: julia --project=. src/task0_completeness.jl
+    deps:
+      - raw_catalog.csv
+      - src/task0_completeness.jl
+    # These are not cached "outputs" but reports to track changes over time
+    plots:
+      - plots/completeness_analysis.png
+    metrics:
+      - metrics/completeness_stats.json
+
+  # -----------------------------------------------------------------
+  # Task A0: Ingestion & ID Assignment
+  # -----------------------------------------------------------------
+  ingest_catalog:
+    cmd: julia --project=. src/taskA0_ingest.jl --input raw_catalog.csv --output data/catalog.arrow
+    deps:
+      - raw_catalog.csv
+      - src/taskA0_ingest.jl
+    outs:
+      - data/catalog.arrow
+
+  # -----------------------------------------------------------------
+  # Task A: Binning / Partitioning
+  # -----------------------------------------------------------------
+  partition_catalog:
+    # The script reads params.yaml to determine how to split the Arrow file
+    cmd: julia --project=. src/taskA_partition.jl --input data/catalog.arrow --output-dir data/binned/ --config params.yaml
+    deps:
+      - data/catalog.arrow
+      - src/taskA_partition.jl
+    params:
+      - params.yaml:
+          - Mc # If Mc changes, we must re-bin
+          - criteria # If definitions (slices) change, we must re-bin
+    outs:
+      - data/binned:
+          cache: true
+          # DVC tracks the directory state.
+          # The script produces: data/binned/criterion=<tag>_partition=<n>.arrow
+
+  # -----------------------------------------------------------------
+  # Task B: K-Means Clustering
+  # -----------------------------------------------------------------
+  cluster_events:
+    # Iterates over all arrow files found in data/binned/
+    cmd: julia --project=. src/taskB_cluster.jl --input-dir data/binned/ --out-assign data/assignments/ --out-sites data/sites/ --config params.yaml
+    deps:
+      - data/binned
+      - src/taskB_cluster.jl
+    params:
+      - params.yaml:
+          - criteria # Contains 'k' (number of clusters) for each criterion tag
+    outs:
+      - data/assignments
+      - data/sites
+
+  # -----------------------------------------------------------------
+  # Task C: Voronoi Boundaries
+  # -----------------------------------------------------------------
+  generate_boundaries:
+    # Uses sites to draw polygons and clips them to the coastline
+    cmd: julia --project=. src/taskC_boundaries.jl --input-dir data/sites/ --output-dir data/boundaries/ --assets assets/taiwan_coastline.geojson
+    deps:
+      - data/sites
+      - assets/taiwan_coastline.geojson
+      - src/taskC_boundaries.jl
+    outs:
+      - data/boundaries
