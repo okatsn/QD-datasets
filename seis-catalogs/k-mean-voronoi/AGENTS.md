@@ -61,28 +61,30 @@ Here are the strict schemas to follow.
 ### Task A0: Ingestion (Source of Truth)
 
 **File:** `data/catalog_all.arrow`
-
-**Columns:** All columns from your `../data/arrow/source=cwa/**/data.arrow` **plus**:
-- `event_id` (`UInt64`): A unique, immutable identifier for every event.
+- **Columns:** All columns from your `../data/arrow/source=cwa/**/data.arrow` **plus**:
+  - `event_id` (`UInt64`): A unique, immutable identifier for every event.
 
 ### Task A: Binning
 
 **File:** `data/binned/criterion=<tag>_partition=<n>.arrow`
-- `event_id`: To link back to the main catalog.
-- `lat`, `lon`: The only features needed for K-Means.
-- `depth`: For verification, but strictly not required for 2D K-Means.
+- **Columns:**
+  - `event_id`: To link back to the main catalog.
+  - `lat`, `lon`: The only features needed for K-Means.
+  - `depth`: For verification, but strictly not required for 2D K-Means.
 
 **Metadata:** Example: `{"criterion": "depth_iso", "partition": "1", "description": "0-10km"}`
 
 ### Task B: Clustering
 
 **File 1 (Traceability):** `data/cluster_assignments/criterion=<tag>_partition=<n>.arrow`
-- `event_id`
-- `cluster_id` (`Int64`): The assigned cluster (1 to $k$).
+- **Columns:**
+  - `event_id`
+  - `cluster_id` (a vector of `Int64`): The assigned cluster (1 to $k$).
 
 **File 2 (Geometry Source):** `data/centroid_coordinates/criterion=<tag>_partition=<n>.arrow`
-- `cluster_id`: The identifier (1 to $k$).
-- `centroid = [lat, lon]`: The centroid coordinates.
+- **Columns:**
+  - `cluster_id`: The identifier (1 to $k$).
+  - `centroid = (lat, lon)`: The centroid coordinates; a vector of `Tuple{Float64, Float64}`.
 
 #### Task C: The Geometry Boundaries
 
