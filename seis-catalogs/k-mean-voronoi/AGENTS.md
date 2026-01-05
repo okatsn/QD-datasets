@@ -9,10 +9,22 @@ We use DVC for pipeline management.
 ## Coding Standards and Technology Stack
 - **Language:** Julia 1.12+.
 - **Data Format:**
-  - Apache Arrow (`Arrow.jl`), referring github repository `apache/arrow-julia`
-  - DataFrames (`DataFrames.jl`), referring github repo `JuliaData/DataFrames.jl`.
+  - Apache Arrow (`Arrow.jl` in Github repository `apache/arrow-julia`)
+  - DataFrames (`JuliaData/DataFrames.jl`)
 - **Configuration:** YAML (`YAML.jl`)
-- **Geometry:** `VoronoiCells.jl` (referring github repo `JuliaGeometry/VoronoiCells.jl` and `JuliaGeometry/DelaunayTriangulation.jl`), `GeometryBasics.jl` (github repo `JuliaGeometry/GeometryBasics.jl`), `LibGEOS.jl` (github repo `JuliaGeo/LibGEOS.jl`)
+- **Geometry:**
+  - `VoronoiCells.jl` (`JuliaGeometry/VoronoiCells.jl`
+  - `JuliaGeometry/DelaunayTriangulation.jl`)
+  - `GeometryBasics.jl` (`JuliaGeometry/GeometryBasics.jl`)
+  - `LibGEOS.jl` (`JuliaGeo/LibGEOS.jl`)
+  - `GeoInterface.jl` (`JuliaGeo/GeoInterface.jl`)
+  - `GeoTables.jl` (`JuliaEarth/GeoTables.jl`)
+- **Clustering:**
+  - `NearestNeighbors.jl` (`KristofferC/NearestNeighbors.jl`)
+  - `Clustering.jl` (`JuliaStats/Clustering.jl`)
+- **Visualization:**
+  - `GeoMakie.jl` (`MakieOrg/GeoMakie.jl`)
+  - `Makie.jl` (`MakieOrg/Makie.jl`)
 - **Style:** Follow standard Julia style (BlueStyle). Use explicit imports.
 - **I/O:**
     - Read parameters from `params.yaml`.
