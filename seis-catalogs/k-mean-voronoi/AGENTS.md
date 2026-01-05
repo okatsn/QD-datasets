@@ -65,19 +65,15 @@ Here are the strict schemas to follow.
 **Columns:** All columns from your `../data/arrow/source=cwa/**/data.arrow` **plus**:
 - `event_id` (`UInt64`): A unique, immutable identifier for every event.
 
-### Task A: Binning (The "Feeder" Tables)
+### Task A: Binning
 
 **File:** `data/binned/criterion=<tag>_partition=<n>.arrow`
-
-**Metadata:** Example: `{"criterion": "depth_iso", "partition": "1", "description": "0-10km"}`
-
-**Columns:**
-
 - `event_id`: To link back to the main catalog.
 - `lat`, `lon`: The only features needed for K-Means.
 - `depth`: For verification, but strictly not required for 2D K-Means.
 
-### Task B: Clustering (The topology)
+**Metadata:** Example: `{"criterion": "depth_iso", "partition": "1", "description": "0-10km"}`
+
 
 **File 1 (Traceability):** `data/assignments/criterion=<tag>_partition=<n>.arrow`
 
