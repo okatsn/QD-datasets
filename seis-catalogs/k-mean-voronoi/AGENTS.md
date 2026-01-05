@@ -74,6 +74,7 @@ Here are the strict schemas to follow.
 
 **Metadata:** Example: `{"criterion": "depth_iso", "partition": "1", "description": "0-10km"}`
 
+### Task B: Clustering
 
 **File 1 (Traceability):** `data/assignments/criterion=<tag>_partition=<n>.arrow`
 
