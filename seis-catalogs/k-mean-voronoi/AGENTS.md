@@ -58,24 +58,26 @@ We use DVC for pipeline management.
 
 Here are the strict schemas to follow.
 
-#### Task A0: Ingestion (Source of Truth)
+### Task A0: Ingestion (Source of Truth)
 
 **File:** `data/catalog.arrow`
-**Columns:** All columns from your `../data/arrow/source=cwa/**/data.arrow` **plus**:
 
+**Columns:** All columns from your `../data/arrow/source=cwa/**/data.arrow` **plus**:
 - `event_id` (`UInt64`): A unique, immutable identifier for every event.
 
-#### Task A: Binning (The "Feeder" Tables)
+### Task A: Binning (The "Feeder" Tables)
 
 **File:** `data/binned/criterion=<tag>_partition=<n>.arrow`
+
 **Metadata:** Example: `{"criterion": "depth_iso", "partition": "1", "description": "0-10km"}`
+
 **Columns:**
 
 - `event_id`: To link back to the main catalog.
 - `lat`, `lon`: The only features needed for K-Means.
-- *(Optional)* `depth`: If needed for verification, but strictly not required for 2D K-Means.
+- `depth`: For verification, but strictly not required for 2D K-Means.
 
-#### Task B: Clustering (The topology)
+### Task B: Clustering (The topology)
 
 **File 1 (Traceability):** `data/assignments/criterion=<tag>_partition=<n>.arrow`
 
@@ -90,6 +92,7 @@ Here are the strict schemas to follow.
 #### Task C: Boundaries (The Geometry)
 
 **File:** `data/boundaries/criterion=<tag>_partition=<n>.arrow`
+
 **Columns:**
 
 * `cluster_id`: Link to the site.
