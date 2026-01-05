@@ -3,13 +3,25 @@ This is basically doing "Static Zones, Dynamic Activity" repeatedly but each tim
 The results against different hyperparameter settings will also provide sensitivity of "Seismo-Geographic Zones" to the controlled volume, allowing insights for further exploratory analysis.
 
 Now I'm managing the project workflow for the first stage.
-The first stage includes
-The project involves the following core tasks.
+The first stage includes catalog clustering and get Voronoi sites, involves the following core tasks:
 
+**The plan for the first stage:**
+- **Define cut-off/binning criteria:** Using cut-off / binning approach to separate the catalog into subsets by depth.
+- **K-Means Clustering:** For each subset, using K-Means clustering to identify seismic clusters spatially (lon & lat).
+- **Voronoi Site Points:** Based on the K-Means result get the point of the "center of mass" (centroids) for each cluster.
+- **Voronoi Site Boundaries:** Based on the **Voronoi Site Points**, derive the boundaries (as a vector of points for each site point).
 
-- Using cut-off / binning approach to separate the catalog into subsets by depth.
-- For each subset, using K-Means clustering to identify seismic clusters spatially (lon & lat)
-- Based on the K-Means result get the "center of point" for each cluster
+For the first stage, I have one remaining question that need to be clarified:
+- The centroid is the center of mass *if* the object has uniform density. However, earthquake event magnitude varies. Is applying weighting by event magnitude physically reasonable for my research objective?
+
+After answer this question and update your understanding,
+- refine **the plan for the first stage**
+- suggest a list of Julia packages that are required/recommended to complete all jobs
+- split the plan into tasks that can be done separately:
+  - I use DVC to manage the workflow
+  - I plan to dispatch tasks to different sets of AI/LLM agents, so ensure the defined task to be "dispatchable"
+  - Draft a general `AGENTS.md` for all agents. Prefer simplicity and avoid overly verbose.
+
 
 
 Here is the data schema of the catalog for your references:
