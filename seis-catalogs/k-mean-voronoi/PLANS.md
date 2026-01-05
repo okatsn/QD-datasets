@@ -87,7 +87,7 @@ The pipeline is managed by DVC. Tasks must be atomic.
 #### Task B (Clustering)
 
 - DVC stage: `cluster_events`
-- **Goal:** Perform K-Means on each binned subset.
+- **Goal:** Perform K-Means on each binned subset for each `k` in `params.yaml`.
 - **Input:** `data/binned/*.arrow`
 - **Output 1:** `data/cluster_assignments/...arrow` (Map: `event_id` -> `cluster_id`)
 - **Output 2:** `data/centroid_coordinates/...arrow` (Map: `cluster_id` -> `points`)

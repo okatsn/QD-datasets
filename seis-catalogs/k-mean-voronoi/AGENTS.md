@@ -76,19 +76,19 @@ Here are the strict schemas to follow.
 
 ### Task B: Clustering
 
-**File 1 (Traceability):** `data/cluster_assignments/criterion=<tag>_partition=<n>.arrow`
+**File 1 (Traceability):** `data/cluster_assignments/criterion=<tag>_partition=<n>_k=<k>.arrow`
 - **Columns:**
   - `event_id`
   - `cluster_id` (a vector of `Int64`): The assigned cluster (1 to $k$).
 
-**File 2 (Geometry Source):** `data/centroid_coordinates/criterion=<tag>_partition=<n>.arrow`
+**File 2 (Geometry Source):** `data/centroid_coordinates/criterion=<tag>_partition=<n>_k=<k>.arrow`
 - **Columns:**
   - `cluster_id`: The identifier (1 to $k$).
   - `centroid = (lat, lon)`: The centroid coordinates; a vector of `Tuple{Float64, Float64}`.
 
 #### Task C: The Geometry Boundaries
 
-**File:** `data/voronoi_boundaries/criterion=<tag>_partition=<n>.arrow`
+**File:** `data/voronoi_boundaries/criterion=<tag>_partition=<n>_k=<k>.arrow`
 - **Columns:**
   - `cluster_id`: Link to the site.
   - `geometry = (lat, lon)`: WKB format; a vector of `Tuple{Float64, Float64}`.
