@@ -76,15 +76,13 @@ Here are the strict schemas to follow.
 
 ### Task B: Clustering
 
-**File 1 (Traceability):** `data/assignments/criterion=<tag>_partition=<n>.arrow`
-
-* `event_id`: Link to catalog.
-* `cluster_id` (`Int64`): The assigned cluster (1 to $k$).
+**File 1 (Traceability):** `data/cluster_assignments/criterion=<tag>_partition=<n>.arrow`
+- `event_id`
+- `cluster_id` (`Int64`): The assigned cluster (1 to $k$).
 
 **File 2 (Geometry Source):** `data/centroid_coordinates/criterion=<tag>_partition=<n>.arrow`
-
-* `cluster_id`: The identifier (1 to $k$).
-* `lat`, `lon`: The centroid coordinates.
+- `cluster_id`: The identifier (1 to $k$).
+- `centroid = [lat, lon]`: The centroid coordinates.
 
 #### Task C: Boundaries (The Geometry)
 
