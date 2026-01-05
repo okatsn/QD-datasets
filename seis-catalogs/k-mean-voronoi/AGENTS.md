@@ -10,18 +10,18 @@ We use DVC for pipeline management.
 - **Language:** Julia 1.12+.
 - **Data Format:**
   - Apache Arrow (`Arrow.jl` in Github repository `apache/arrow-julia`)
-  - DataFrames (`JuliaData/DataFrames.jl`)
+  - DataFrames (`JuliaData/DataFrames.jl`): Standard tabular data handling.
 - **Configuration:** YAML (`YAML.jl`)
 - **Geometry:**
   - `VoronoiCells.jl` (`JuliaGeometry/VoronoiCells.jl`
   - `JuliaGeometry/DelaunayTriangulation.jl`)
-  - `GeometryBasics.jl` (`JuliaGeometry/GeometryBasics.jl`)
-  - `LibGEOS.jl` (`JuliaGeo/LibGEOS.jl`)
+  - `GeometryBasics.jl` (`JuliaGeometry/GeometryBasics.jl`), `LibGEOS.jl` (`JuliaGeo/LibGEOS.jl`): For handling the polygon operations (clipping Voronoi cells against the Taiwan coastline).
   - `GeoInterface.jl` (`JuliaGeo/GeoInterface.jl`)
   - `GeoTables.jl` (`JuliaEarth/GeoTables.jl`)
+  - `Distances.jl` (`JuliaStats/Distances.jl`): For calculating metric distances if needed.
 - **Clustering:**
   - `NearestNeighbors.jl` (`KristofferC/NearestNeighbors.jl`)
-  - `Clustering.jl` (`JuliaStats/Clustering.jl`)
+  - `Clustering.jl` (`JuliaStats/Clustering.jl`): For kmeans algorithms.
 - **Visualization:**
   - `GeoMakie.jl` (`MakieOrg/GeoMakie.jl`)
   - `Makie.jl` (`MakieOrg/Makie.jl`)
