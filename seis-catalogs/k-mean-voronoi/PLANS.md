@@ -48,6 +48,9 @@ Here is the data schema of the catalog for your references:
 
 # PLAN.md
 
+Referring:
+- (Main) https://gemini.google.com/app/482bcb782530fef4
+
 ## Project Overview
 This project builds a hydro-seismicity analysis pipeline for Taiwan. The goal involves creating static "Seismo-Geographic Zones" using Voronoi tessellation on earthquake clusters.
 
