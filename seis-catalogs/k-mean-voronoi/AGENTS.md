@@ -42,7 +42,7 @@ We use DVC for pipeline management.
 
 **Schema Compliance:**
 - **Assignments:** Must contain `event_id` (UInt64/Int64) and `cluster_id` (Int).
-- **Sites:** Must contain `cluster_id`, `lat`, `lon`.
+- **Sites:** Must contain `cluster_id`, `points`.
 - **Boundaries:** Must contain `cluster_id`, `geometry` (WKT String).
 
 ## Coding Guidelines
@@ -60,7 +60,7 @@ Here are the strict schemas to follow.
 
 ### Task A0: Ingestion (Source of Truth)
 
-**File:** `data/catalog.arrow`
+**File:** `data/catalog_all.arrow`
 
 **Columns:** All columns from your `../data/arrow/source=cwa/**/data.arrow` **plus**:
 - `event_id` (`UInt64`): A unique, immutable identifier for every event.
@@ -84,11 +84,8 @@ Here are the strict schemas to follow.
 - `cluster_id`: The identifier (1 to $k$).
 - `centroid = [lat, lon]`: The centroid coordinates.
 
-#### Task C: Boundaries (The Geometry)
+#### Task C: The Geometry Boundaries
 
-**File:** `data/boundaries/criterion=<tag>_partition=<n>.arrow`
-
-**Columns:**
-
-* `cluster_id`: Link to the site.
-* `geometry`: `String` (WKT format, e.g., `"POLYGON((121.1 23.5, ...))"`) or `Vector{Float64}` (flattened coords). *Recommendation: WKT is text-heavy but universally readable by Geo packages.*
+**File:** `data/voronoi_boundaries/criterion=<tag>_partition=<n>.arrow`
+- `cluster_id`: Link to the site.
+- `geometry`: `String` (WKT format, e.g., `"POLYGON((121.1 23.5, ...))"`) or `Vector{Float64}` (flattened coords). *Recommendation: WKT is text-heavy but universally readable by Geo packages.*

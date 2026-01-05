@@ -1,10 +1,10 @@
 # Global Physics Parameters
 # Magnitude of completeness $M_c$
 Mc:
-  value:
+  cutoff:
     - 2.0 # Determined by Task 0
 
-K_mean:
+K_means:
   k:
     - 5
     - 6
