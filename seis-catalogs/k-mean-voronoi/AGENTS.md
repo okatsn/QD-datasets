@@ -87,5 +87,7 @@ Here are the strict schemas to follow.
 #### Task C: The Geometry Boundaries
 
 **File:** `data/voronoi_boundaries/criterion=<tag>_partition=<n>.arrow`
-- `cluster_id`: Link to the site.
-- `geometry`: `String` (WKT format, e.g., `"POLYGON((121.1 23.5, ...))"`) or `Vector{Float64}` (flattened coords). *Recommendation: WKT is text-heavy but universally readable by Geo packages.*
+- **Columns:**
+  - `cluster_id`: Link to the site.
+  - `geometry = (lat, lon)`: WKB format; a vector of `Tuple{Float64, Float64}`.
+    - Note: Ensure the first and last points are identical (closed loop) to satisfy standard GIS requirements.
