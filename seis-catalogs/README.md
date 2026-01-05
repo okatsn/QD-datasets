@@ -1,5 +1,27 @@
 # README
 
+## CWA Catalogs
+
+### Data Schema
+
+All processed Arrow files in `data/arrow/` **must** strictly adhere to this schema.
+
+| Column Name      | Julia Type | Arrow Storage | Description / Constraints                               |
+| :--------------- | :--------- | :------------ | :------------------------------------------------------ |
+| `time`           | `DateTime` | `Timestamp`   | **UTC**. Combined date and time.                        |
+| `lon`            | `Float64`  | `Double`      | Longitude in Decimal Degrees (WGS84).                   |
+| `lat`            | `Float64`  | `Double`      | Latitude in Decimal Degrees (WGS84).                    |
+| `depth`          | `Float64`  | `Double`      | Hypocentral depth in **km**.                            |
+| `mag`            | `Float32`  | `Float`       | Magnitude value.                                        |
+| `mag_type`       | `String`   | `DictEncoded` | Scale code (e.g., "ML", "Mw", "Mb").                    |
+| `is_depth_fixed` | `Bool`     | `Boolean`     | `true` if depth was fixed/constrained; `false` if free. |
+| `quality`        | `String`   | `DictEncoded` | Location quality grade (e.g., "A", "B", "C", "D").      |
+| `rms`            | `Float32`  | `Float`       | Root Mean Square residual in **seconds**.               |
+| `erh`            | `Float32`  | `Float`       | Horizontal location error in **km**.                    |
+| `erz`            | `Float32`  | `Float`       | Vertical location error in **km**.                      |
+
+*Note: The partition keys (`source` and `year`) are **not** stored as columns inside the Arrow file to save space. They are inferred from the directory structure during query time.*
+
 
 ## Raw data (CWA-GDMSN)
 Referring: [Appendix C (附錄C 地震目錄欄位說明)](https://gdms.cwa.gov.tw/help.php#AppendixC)

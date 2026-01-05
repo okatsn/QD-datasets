@@ -15,23 +15,10 @@ It serves as the foundational "off-the-shelf" layer for downstream seismological
 * **Orchestration:** DVC (Data Version Control)
 
 ## 3. Data Schema (The Contract)
-All processed Arrow files in `data/arrow/` **must** strictly adhere to this schema.
 
-| Column Name      | Julia Type | Arrow Storage | Description / Constraints                               |
-| :--------------- | :--------- | :------------ | :------------------------------------------------------ |
-| `time`           | `DateTime` | `Timestamp`   | **UTC**. Combined date and time.                        |
-| `lon`            | `Float64`  | `Double`      | Longitude in Decimal Degrees (WGS84).                   |
-| `lat`            | `Float64`  | `Double`      | Latitude in Decimal Degrees (WGS84).                    |
-| `depth`          | `Float64`  | `Double`      | Hypocentral depth in **km**.                            |
-| `mag`            | `Float32`  | `Float`       | Magnitude value.                                        |
-| `mag_type`       | `String`   | `DictEncoded` | Scale code (e.g., "ML", "Mw", "Mb").                    |
-| `is_depth_fixed` | `Bool`     | `Boolean`     | `true` if depth was fixed/constrained; `false` if free. |
-| `quality`        | `String`   | `DictEncoded` | Location quality grade (e.g., "A", "B", "C", "D").      |
-| `rms`            | `Float32`  | `Float`       | Root Mean Square residual in **seconds**.               |
-| `erh`            | `Float32`  | `Float`       | Horizontal location error in **km**.                    |
-| `erz`            | `Float32`  | `Float`       | Vertical location error in **km**.                      |
+### [CWA catalogs](data/arrow/source=cwa/)
 
-*Note: The partition keys (`source` and `year`) are **not** stored as columns inside the Arrow file to save space. They are inferred from the directory structure during query time.*
+Refers [`catalog-cwa.jl`](scripts/catalog-cwa.jl) and [README](README.md)
 
 ## 4. Storage Layout (Hive Partitioning)
 Data is organized hierarchically. New data sources or years must follow this pattern to be queryable.
@@ -46,3 +33,4 @@ seis-catalogs/
             ├── year={YYYY}/
             │   └── data.arrow
             └── ...
+```
