@@ -61,9 +61,16 @@ stages:
   # -----------------------------------------------------------------
   # Task C: Voronoi Boundaries
   # -----------------------------------------------------------------
+  generate_taiwan_coastline:
+    # Load the shape file and extract coastline.
+    cmd: julia --project=. taiwan_coastline.jl
+    deps:
+      - ../data/map/Taiwan
+    outs:
+      - assets/taiwan_coastline.geojson
   generate_boundaries:
     # Uses sites to draw polygons and clips them to the coastline
-    cmd: julia --project=. taskC_boundaries.jl --input-dir data/centroid_coordinates/ --output-dir data/voronoi_boundaries/ --assets assets/taiwan_coastline.geojson
+    cmd: julia --project=. taskC_boundaries.jl
     deps:
       - data/centroid_coordinates
       - assets/taiwan_coastline.geojson
