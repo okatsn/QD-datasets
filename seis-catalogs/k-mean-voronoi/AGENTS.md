@@ -33,8 +33,13 @@ We use DVC for pipeline management.
 
 
 ## Input/Output Rules (Strict)
-**Paths:**
-- Never hardcode paths. Accept input/output paths as command-line arguments or derive them strictly from the `criterion` and `partition` tags.
+
+**Coordinate Convention:**
+- Use `(lat, lon)` ordering (scientific convention) throughout.
+
+**Paths (Hive-Style Partitioning):**
+- Never hardcode paths. Derive them strictly from `criterion`, `partition`, and `k` tags.
+- Use Hive-style nested directories: `criterion=<tag>/partition=<n>/k=<k>/data.arrow`
 - If a script generates a plot, save it to `plots/` folder.
 
 **Arrow Metadata:**
@@ -66,7 +71,7 @@ Here are the strict schemas to follow.
 
 ### Task A: Binning
 
-**File:** `data/binned/criterion=<tag>_partition=<n>.arrow`
+**File:** `data/binned/criterion=<tag>/partition=<n>/data.arrow`
 - **Columns:**
   - `event_id`: To link back to the main catalog.
   - `lat`, `lon`: The only features needed for K-Means.
@@ -76,19 +81,19 @@ Here are the strict schemas to follow.
 
 ### Task B: Clustering
 
-**File 1 (Traceability):** `data/cluster_assignments/criterion=<tag>_partition=<n>_k=<k>.arrow`
+**File 1 (Traceability):** `data/cluster_assignments/criterion=<tag>/partition=<n>/k=<k>/data.arrow`
 - **Columns:**
   - `event_id`
   - `cluster_id` (a vector of `Int64`): The assigned cluster (1 to $k$).
 
-**File 2 (Geometry Source):** `data/centroid_coordinates/criterion=<tag>_partition=<n>_k=<k>.arrow`
+**File 2 (Geometry Source):** `data/centroid_coordinates/criterion=<tag>/partition=<n>/k=<k>/data.arrow`
 - **Columns:**
   - `cluster_id`: The identifier (1 to $k$).
   - `centroid = (lat, lon)`: The centroid coordinates; a vector of `Tuple{Float64, Float64}`.
 
 #### Task C: The Geometry Boundaries
 
-**File:** `data/voronoi_boundaries/criterion=<tag>_partition=<n>_k=<k>.arrow`
+**File:** `data/voronoi_boundaries/criterion=<tag>/partition=<n>/k=<k>/data.arrow`
 - **Columns:**
   - `cluster_id`: Link to the site.
   - `geometry = (lat, lon)`: WKB format; a vector of `Tuple{Float64, Float64}`.

@@ -39,8 +39,7 @@ stages:
     outs:
       - data/binned:
           cache: true
-          # DVC tracks the directory state.
-          # The script produces: data/binned/criterion=<tag>_partition=<n>.arrow
+          # DVC tracks the directory state (Hive-style: criterion=<tag>/partition=<n>/data.arrow)
 
   # -----------------------------------------------------------------
   # Task B: K-Means Clustering
@@ -55,6 +54,7 @@ stages:
       - params.yaml:
           - K_means
     outs:
+      # criterion=<tag>/partition=<n>/k=<k>/data.arrow
       - data/cluster_assignments
       - data/centroid_coordinates
 
@@ -76,4 +76,5 @@ stages:
       - assets/taiwan_coastline.geojson
       - taskC_boundaries.jl
     outs:
+      # criterion=<tag>/partition=<n>/k=<k>/data.arrow
       - data/voronoi_boundaries
