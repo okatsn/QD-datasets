@@ -54,7 +54,7 @@ stages:
       - params.yaml:
           - K_means
     outs:
-      # criterion=<tag>/partition=<n>/k=<k>/data.arrow
+      # Hive-style: criterion=<tag>/partition=<n>/k=<k>/data.arrow
       - data/cluster_assignments
       - data/centroid_coordinates
 
@@ -69,12 +69,12 @@ stages:
     outs:
       - assets/taiwan_coastline.geojson
   generate_boundaries:
-    # Task C: Uses centroids to draw polygons and clips them to the coastline
+    # Uses centroids to draw polygons and clips them to the coastline
     cmd: julia --project=. taskC_boundaries.jl
     deps:
       - data/centroid_coordinates
       - assets/taiwan_coastline.geojson
       - taskC_boundaries.jl
     outs:
-      # criterion=<tag>/partition=<n>/k=<k>/data.arrow
+      # Hive-style: criterion=<tag>/partition=<n>/k=<k>/data.arrow
       - data/voronoi_boundaries
