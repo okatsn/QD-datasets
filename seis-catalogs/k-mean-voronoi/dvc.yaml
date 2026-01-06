@@ -62,7 +62,7 @@ stages:
   # Task C: Voronoi Boundaries
   # -----------------------------------------------------------------
   generate_taiwan_coastline:
-    # Task C0: Load the shape file and extract coastline.
+    # C0: Load the shape file and extract coastline.
     cmd: julia --project=. taiwan_coastline.jl
     deps:
       - ../data/map/Taiwan
