@@ -128,7 +128,7 @@ function generate_binned_data()
                         "criterion" => criterion_name,
                         "partition" => string(partition_id),
                         "description" => desc,
-                        "cutoff" => cutoff,
+                        "cutoff" => string(cutoff),
                         "crs" => "EPSG:4326"
                     )
 
