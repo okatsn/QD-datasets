@@ -27,7 +27,6 @@ function parse_commandline()
         "--verbose", "-v"
         help = "enable verbose output"
         action = :store_true
-        default = false
         "--skip"
         help = "comma-separated list of script numbers to skip (e.g., '1,6')"
         default = ""
