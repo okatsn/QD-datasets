@@ -69,7 +69,7 @@ stages:
     outs:
       - assets/taiwan_coastline.geojson
   generate_boundaries:
-    # Uses sites to draw polygons and clips them to the coastline
+    # Uses centroids to draw polygons and clips them to the coastline
     cmd: julia --project=. taskC_boundaries.jl
     deps:
       - data/centroid_coordinates

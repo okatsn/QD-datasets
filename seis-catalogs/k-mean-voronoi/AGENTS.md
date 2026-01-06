@@ -47,8 +47,8 @@ We use DVC for pipeline management.
 
 **Schema Compliance:**
 - **Assignments:** Must contain `event_id` (UInt64/Int64) and `cluster_id` (Int).
-- **Sites:** Must contain `cluster_id`, `points`.
-- **Boundaries:** Must contain `cluster_id`, `geometry` (WKT String).
+- **Sites:** Must contain `cluster_id`, `centroid` (Struct).
+- **Boundaries:** Must contain `cluster_id`, `geometry` (WKB Binary).
 
 ## Coding Guidelines
 - **Dispatching:** Use dictionary dispatch patterns (mapping string keys to functions) for handling different criteria. Avoid giant `if-else` blocks.
@@ -84,17 +84,17 @@ Here are the strict schemas to follow.
 **File 1 (Traceability):** `data/cluster_assignments/criterion=<tag>/partition=<n>/k=<k>/data.arrow`
 - **Columns:**
   - `event_id`
-  - `cluster_id` (a vector of `Int64`): The assigned cluster (1 to $k$).
+  - `cluster_id` (`Int64`): The assigned cluster (1 to $k$).
 
 **File 2 (Geometry Source):** `data/centroid_coordinates/criterion=<tag>/partition=<n>/k=<k>/data.arrow`
 - **Columns:**
   - `cluster_id`: The identifier (1 to $k$).
-  - `centroid = (lat, lon)`: The centroid coordinates; a vector of `Tuple{Float64, Float64}`.
+  - `centroid` (Type: `Struct<lat: Float64, lon: Float64>`): The centroid coordinates.
 
 #### Task C: The Geometry Boundaries
 
 **File:** `data/voronoi_boundaries/criterion=<tag>/partition=<n>/k=<k>/data.arrow`
 - **Columns:**
   - `cluster_id`: Link to the site.
-  - `geometry = (lat, lon)`: WKB format; a vector of `Tuple{Float64, Float64}`.
-    - Note: Ensure the first and last points are identical (closed loop) to satisfy standard GIS requirements.
+  - `geometry` (`Binary`): WKB (Well-Known Binary) polygon representation.
+    - Note: Polygons must be closed (first and last vertex identical) per OGC standards.
