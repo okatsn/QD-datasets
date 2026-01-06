@@ -81,8 +81,6 @@ The pipeline is managed by DVC. Tasks must be atomic.
 
 - DVC stage: `partition_catalog`
 - **Goal:** Filter catalog by $M_c$ and split into subsets based on `criteria` defined in `params.yaml`.
-- **Output:**
-- `data/binned/criterion=<tag>_partition=<n>.arrow` (Metadata must include partition info).
 
 #### Task B (Clustering)
 
@@ -99,13 +97,11 @@ The pipeline is managed by DVC. Tasks must be atomic.
 #### Task C (Geometry)
 
 - DVC stage: `generate_boundaries`
-- **Goal:** Compute Voronoi cells from sites and clip to Taiwan region.
-- **Input:** `data/centroid_coordinates/*.arrow`, `assets/taiwan_coastline.geojson`
-- **Output:** `data/voronoi_boundaries/...arrow` (Columns: `cluster_id`, `geometry`)
+- **Goal:** Compute Voronoi cells from centroids and clip to Taiwan coastline.
 
 ## Data Standards
 * **Format:** All intermediate data must be **Apache Arrow**.
-* **Metadata:** Every Arrow file must contain metadata keys describing its `criterion` and `partition`.
+* **Paths:** Use Hive-style partitioning (see `AGENTS.md` for schema details).
 
 ## Parameters (`params.yaml`)
 * `Mc`: Global cutoff magnitude.
