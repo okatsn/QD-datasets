@@ -5,6 +5,7 @@ We are building a pipeline to analyze Hydroseismicity in Taiwan.
 The goal is to correlate rainfall timeseries with earthquake cluster activity.
 We use Julia.
 We use DVC for pipeline management.
+- **Testing:** The validity of the pipeline is tested by running the production logic against a lightweight "Fake Dataset" (`./fake-data`) that mirrors the structure of the real dataset (`./data`).
 
 ## Coding Standards and Technology Stack
 - **Language:** Julia 1.12+.
@@ -31,6 +32,9 @@ We use DVC for pipeline management.
     - Inputs/Outputs must strictly follow the DVC dependency graph paths provided in the prompt.
     - Always ensure directories exist (`mkpath`) before writing.
 
+## File Structure Conventions
+- `./data`: Production data (Git-ignored, managed by DVC).
+- `./fake-data`: Synthetic data for testing (matches `./data` schema exactly).
 
 ## Input/Output Rules (Strict)
 
