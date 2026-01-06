@@ -5,7 +5,7 @@ using Arrow
 using DataFrames
 using JSON
 
-const BASE_DIR = @__DIR__ |> dirname
+const BASE_DIR = dirname(@__DIR__)
 const FAKE_DATA_DIR = joinpath(BASE_DIR, "fake-data")
 
 function check_file_exists(path::String, description::String)
@@ -23,7 +23,8 @@ function check_arrow_schema(path::String, expected_columns::Vector{Symbol})
     end
 
     table = Arrow.Table(full_path)
-    actual_cols = Set(Symbol.(names(table)))
+    df = DataFrame(table)
+    actual_cols = Set(Symbol.(names(df)))
     expected_cols = Set(expected_columns)
 
     if actual_cols == expected_cols
