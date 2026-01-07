@@ -55,15 +55,30 @@ Here is the data schema of the catalog:
 
 ## Plans for each phase
 
+### Common
+
+- Understand the I/O of the stage (referring the `deps` and `outs` of this stage) first.
+- Prefer `CairoMakie.jl` and `AlgebraOfGraphics.jl` in visualization.
+
 ### Phase 0: Foundation
 
 ####  Task 0 (Exploratory)
 
 - DVC stage: `analyze_completeness`
 - **Goal:** Determine the optimal Magnitude of Completeness ($M_c$).
-- **Output:** Report/Plots (Does not block the pipeline; informs `params.yaml`).
+- **Output:**
+  - Report and Plots.
+    - A histogram of event counts with bin size 0.1 (in `mag`)
+  - Does not block the pipeline; i.e., the output serves as no dependencies to any other stage.
+  - The result is used to inform the choice of `Mc.cutoff`.
 - **Method:**
-  * MAXC (Maximum Curvature): Compute a histogram of magnitudes with a bin size of 0.1. The $M_c$​ is simply the bin center with the highest frequency.
+  - MAXC (Maximum Curvature): Compute a histogram of magnitudes with a bin size of 0.1. The $M_c$​ is simply the bin center with the highest frequency.
+
+Suggested Workflow:
+- Create MAXC function `maxc(mags::Vector{<:AbstractFloat}; bin_size=0.1)`, which returns `(mc_lower, mc_upper)` (lower/upper bound of magnitude of completeness)
+  - For example, if `mags` has the most population in the range of $[2.1,2.2)$, then `(mc_lower, mc_upper) = (2.1, 2.2)`.
+- Calculate (mc_lower, mc_upper) for the entire catalog.
+- Draw a histogram with exactly the same binning as we calculate MAXC.
 
 #### Task A0 (Ingestion)
 
@@ -71,7 +86,9 @@ Here is the data schema of the catalog:
 - **Goal:** Convert raw data to a single Arrow file and attach unique `event_id`.
 - **Input:** `../data/arrow/source=cwa/**/data.arrow`
 - **Output:**
-      * a single `catalog_all.arrow` file with additional unique `event_id` column.
+  - a single `catalog_all.arrow` file with additional unique `event_id` column.
+
+
 
 ### Phase 1: Spatial Partitioning
 

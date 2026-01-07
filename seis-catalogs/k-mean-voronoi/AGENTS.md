@@ -44,7 +44,9 @@ We use DVC for pipeline management.
 **Paths (Hive-Style Partitioning):**
 - Never hardcode paths. Derive them strictly from `criterion`, `partition`, and `k` tags.
 - Use Hive-style nested directories: `criterion=<tag>/partition=<n>/k=<k>/data.arrow`
-- If a script generates a plot, save it to `plots/` folder.
+- If a script generates a plot, save it to a subfolder `plots/<dvc_stage_name>`; for example:
+  - For example, for a dvc stage `analyze_completeness`, make directory `plots/analyze_completeness` and save the figure there.
+  - Don't forget to configure `plots` in `dvc.yaml`.
 
 **Arrow Metadata:**
 - Inherit CRS metadata from the source (`../data/arrow/source=cwa/**/data.arrow`).
