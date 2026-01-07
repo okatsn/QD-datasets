@@ -1,9 +1,17 @@
-Based on your refinement, I plan to use cut-off or binning approach to handle the "depth" dimension, making each cut-off/binning criteria controlled by a set of hyperparameters.
-This is basically doing "Static Zones, Dynamic Activity" repeatedly but each time with a different criterion that defines "Static Zones".
-The results against different hyperparameter settings will also provide sensitivity of "Seismo-Geographic Zones" to the controlled volume, allowing insights for further exploratory analysis.
+# PLAN.md
+Referring:
+- (Main) https://gemini.google.com/app/482bcb782530fef4
 
-Now I'm managing the project workflow for the first stage.
-The first stage includes catalog clustering and get Voronoi sites, involves the following core tasks:
+## Overview
+
+This project builds a hydro-seismicity analysis pipeline for Taiwan. The goal involves creating static "Seismo-Geographic Zones" using Voronoi tessellation on earthquake clusters.
+
+In the current stage, we analyze only seismicity.
+We are going to test different sets of criteria for defining "static zones" of seismic active area.
+This plan use cut-off or binning approach to handle the "depth" dimension; each set of cut-off/binning criteria is controlled by hyperparameters.
+The results against different hyperparameter settings will provide sensitivity of "Seismo-Geographic Zones" to the controlled volume, allowing insights for further exploratory analysis.
+
+This stage includes catalog clustering and get Voronoi sites, involves the following core tasks:
 
 **The plan for the first stage:**
 - **Define cut-off/binning criteria:** Using cut-off / binning approach to separate the catalog into subsets by depth.
@@ -11,20 +19,20 @@ The first stage includes catalog clustering and get Voronoi sites, involves the 
 - **Voronoi Site Points:** Based on the K-Means result get the point of the "center of mass" (centroids) for each cluster.
 - **Voronoi Site Boundaries:** Based on the **Voronoi Site Points**, derive the boundaries (as a vector of points for each site point).
 
-For the first stage, I have one remaining question that need to be clarified:
-- The centroid is the center of mass *if* the object has uniform density. However, earthquake event magnitude varies. Is applying weighting by event magnitude physically reasonable for my research objective?
-
-After answer this question and update your understanding,
-- refine **the plan for the first stage**
-- suggest a list of Julia packages that are required/recommended to complete all jobs
-- split the plan into tasks that can be done separately:
-  - I use DVC to manage the workflow
-  - I plan to dispatch tasks to different sets of AI/LLM agents, so ensure the defined task to be "dispatchable"
-  - Draft a general `AGENTS.md` for all agents. Prefer simplicity and avoid overly verbose.
+> - The centroid is the center of mass *if* the object has uniform density.
+> - Although earthquake event magnitude varies, we don't apply any weighting by event magnitude because hydroseismicity is often low-magnitude.
 
 
+## Data Standards, Workflow Hierarchy and Catalog
 
-Here is the data schema of the catalog for your references:
+- **Workflow Management:**The pipeline is managed by DVC.
+- **Paths:** Use Hive-style partitioning (see `AGENTS.md` for schema details).
+- **Parameters:** Refer `params.yaml`:
+  - `Mc.cutoff`: Global cutoff magnitude.
+  - `criteria`: Dictionary of partitioning strategies. Each strategy defines its function name and arguments.
+
+
+Here is the data schema of the catalog:
 
 ```md
 | Column Name      | Julia Type | Arrow Storage | Description / Constraints                               |
@@ -45,17 +53,12 @@ Here is the data schema of the catalog for your references:
 
 
 
+## Plans for each phase
 
-# PLAN.md
+### Common
 
-Referring:
-- (Main) https://gemini.google.com/app/482bcb782530fef4
-
-## Project Overview
-This project builds a hydro-seismicity analysis pipeline for Taiwan. The goal involves creating static "Seismo-Geographic Zones" using Voronoi tessellation on earthquake clusters.
-
-## Workflow Hierarchy
-The pipeline is managed by DVC. Tasks must be atomic.
+- Understand the I/O of the stage (referring the `deps` and `outs` of this stage) first.
+- Prefer `CairoMakie.jl` and `AlgebraOfGraphics.jl` in visualization.
 
 ### Phase 0: Foundation
 
@@ -63,9 +66,19 @@ The pipeline is managed by DVC. Tasks must be atomic.
 
 - DVC stage: `analyze_completeness`
 - **Goal:** Determine the optimal Magnitude of Completeness ($M_c$).
-- **Output:** Report/Plots (Does not block the pipeline; informs `params.yaml`).
+- **Output:**
+  - Report and Plots.
+    - A histogram of event counts with bin size 0.1 (in `mag`)
+  - Does not block the pipeline; i.e., the output serves as no dependencies to any other stage.
+  - The result is used to inform the choice of `Mc.cutoff`.
 - **Method:**
-  * MAXC (Maximum Curvature): Compute a histogram of magnitudes with a bin size of 0.1. The $M_c$​ is simply the bin center with the highest frequency.
+  - MAXC (Maximum Curvature): Compute a histogram of magnitudes with a bin size of 0.1. The $M_c$​ is simply the bin center with the highest frequency.
+
+Suggested Workflow:
+- Create MAXC function `maxc(mags::Vector{<:AbstractFloat}; bin_size=0.1)`, which returns `(mc_lower, mc_upper)` (lower/upper bound of magnitude of completeness)
+  - For example, if `mags` has the most population in the range of $[2.1,2.2)$, then `(mc_lower, mc_upper) = (2.1, 2.2)`.
+- Calculate (mc_lower, mc_upper) for the entire catalog.
+- Draw a histogram with exactly the same binning as we calculate MAXC.
 
 #### Task A0 (Ingestion)
 
@@ -73,7 +86,9 @@ The pipeline is managed by DVC. Tasks must be atomic.
 - **Goal:** Convert raw data to a single Arrow file and attach unique `event_id`.
 - **Input:** `../data/arrow/source=cwa/**/data.arrow`
 - **Output:**
-      * a single `catalog_all.arrow` file with additional unique `event_id` column.
+  - a single `catalog_all.arrow` file with additional unique `event_id` column.
+
+
 
 ### Phase 1: Spatial Partitioning
 
@@ -99,10 +114,3 @@ The pipeline is managed by DVC. Tasks must be atomic.
 - DVC stage: `generate_boundaries`
 - **Goal:** Compute Voronoi cells from centroids and clip to Taiwan coastline.
 
-## Data Standards
-* **Format:** All intermediate data must be **Apache Arrow**.
-* **Paths:** Use Hive-style partitioning (see `AGENTS.md` for schema details).
-
-## Parameters (`params.yaml`)
-* `Mc`: Global cutoff magnitude.
-* `criteria`: Dictionary of partitioning strategies. Each strategy defines its function name and arguments.
