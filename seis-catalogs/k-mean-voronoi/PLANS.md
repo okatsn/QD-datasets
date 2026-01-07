@@ -23,9 +23,14 @@ This stage includes catalog clustering and get Voronoi sites, involves the follo
 > - Although earthquake event magnitude varies, we don't apply any weighting by event magnitude because hydroseismicity is often low-magnitude.
 
 
-## Workflow Hierarchy and Stage I/O
+## Data Standards, Workflow Hierarchy and Catalog
 
-The pipeline is managed by DVC. Tasks must be atomic.
+- **Workflow Management:**The pipeline is managed by DVC.
+- **Paths:** Use Hive-style partitioning (see `AGENTS.md` for schema details).
+- **Parameters:** Refer `params.yaml`:
+  - `Mc.cutoff`: Global cutoff magnitude.
+  - `criteria`: Dictionary of partitioning strategies. Each strategy defines its function name and arguments.
+
 
 Here is the data schema of the catalog:
 
@@ -44,6 +49,9 @@ Here is the data schema of the catalog:
 | `erh`            | `Float32`  | `Float`       | Horizontal location error in **km**.                    |
 | `erz`            | `Float32`  | `Float`       | Vertical location error in **km**.                      |
 ```
+
+
+
 
 ## Plans for each phase
 
@@ -89,10 +97,3 @@ Here is the data schema of the catalog:
 - DVC stage: `generate_boundaries`
 - **Goal:** Compute Voronoi cells from centroids and clip to Taiwan coastline.
 
-## Data Standards
-* **Format:** All intermediate data must be **Apache Arrow**.
-* **Paths:** Use Hive-style partitioning (see `AGENTS.md` for schema details).
-
-## Parameters (`params.yaml`)
-* `Mc`: Global cutoff magnitude.
-* `criteria`: Dictionary of partitioning strategies. Each strategy defines its function name and arguments.
