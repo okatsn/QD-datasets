@@ -1,0 +1,15 @@
+stages:
+  make_arrows:
+    cmd: julia --project=@. 'scripts/catalog-cwa.jl'
+    deps:
+      - "scripts/catalog-cwa.jl"
+      - "data/raw"
+    outs:
+      - "data/arrow"
+  raw_preview:
+    cmd: julia --project=@. 'scripts/raw_catalog_preview.jl'
+    deps:
+      - "scripts/raw_catalog_preview.jl"
+      - "data/arrow"
+    outs:
+      - "preview/eqkmap"
