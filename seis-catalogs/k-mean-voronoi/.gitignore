@@ -1,5 +1,0 @@
-# Ignore all generated fake data
-fake-data/
-
-# But keep the directory structure visible
-!fake-data/.gitkeep
