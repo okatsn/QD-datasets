@@ -157,7 +157,7 @@ for group in grouped
         df_to_write;
         metadata=tbl_metadata,
         colmetadata=col_metadata,
-        dictencode=true
+        dictencode=true # Set `dictencode=true` when ALL columns containing many repeated values. To dict encode specific columns, wrap the column/array in Arrow.DictEncode(col)
     )
 end
 println("\n✓ Processing complete! Data written to $arrow_base")
