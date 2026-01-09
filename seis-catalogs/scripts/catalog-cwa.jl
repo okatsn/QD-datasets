@@ -4,6 +4,7 @@ using CatalogPreprocess
 using Chain
 using Dates
 using Arrow
+using CategoricalArrays
 
 # ============================================================================
 # 1. Read all raw CSV files
@@ -72,6 +73,17 @@ df_transformed = @chain df_raw begin
 
     # Select only the columns we need (including year for partitioning)
     select(:time, :lon, :lat, :depth, :mag, :mag_type, :is_depth_fixed, :quality, :rms, :erh, :erz, :year)
+
+    # Convert categorical columns to CategoricalArray for efficient storage
+    # CategoricalArray provides:
+    # - Automatic dictionary encoding (values stored once, referenced by integer codes)
+    # - Native Arrow.jl integration (written as DictEncoded)
+    # - Memory efficient for columns with repeated values
+    transform(
+        :mag_type => categorical => :mag_type,
+        :is_depth_fixed => categorical => :is_depth_fixed,
+        :quality => categorical => :quality
+    )
 end
 
 # ============================================================================
@@ -149,15 +161,15 @@ for group in grouped
     df_to_write = select(group, Not(:year))
 
     # Write Arrow file with metadata
-    # - dictencode=true: enables dictionary encoding for string columns (mag_type, quality)
-    #   This significantly reduces file size for low-cardinality string columns.
+    # CategoricalArrays are automatically dict-encoded by Arrow.jl
+    # No need to specify dictencode=true for CategoricalArray columns
     output_path = joinpath(year_dir, "data.arrow")
     Arrow.write(
         output_path,
         df_to_write;
         metadata=tbl_metadata,
         colmetadata=col_metadata,
-        dictencode=true # Set `dictencode=true` when ALL columns containing many repeated values. To dict encode specific columns, wrap the column/array in Arrow.DictEncode(col)
+        # dictencode=true # Set `dictencode=true` when ALL columns containing many repeated values. To dict encode specific columns, wrap the column/array in Arrow.DictEncode(col)
     )
 end
 println("\n✓ Processing complete! Data written to $arrow_base")
