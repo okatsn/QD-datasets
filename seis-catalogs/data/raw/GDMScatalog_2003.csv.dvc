@@ -1,0 +1,5 @@
+outs:
+- md5: b8fdf5a00e43fa5dfac960b60a11d140
+  size: 2149785
+  hash: md5
+  path: GDMScatalog_2003.csv
