@@ -5,9 +5,9 @@ stages:
     deps:
     - path: data/raw
       hash: md5
-      md5: bdfd34c7e303bfd4289ce1b355987665.dir
-      size: 42372005
-      nfiles: 31
+      md5: ffb592208b8c86adef7b09a622f93dce.dir
+      size: 66371981
+      nfiles: 55
     - path: scripts/catalog-cwa.jl
       hash: md5
       md5: 2a2b117ef3a0ee68cd6d91edec071111
@@ -15,9 +15,9 @@ stages:
     outs:
     - path: data/arrow
       hash: md5
-      md5: a3ee8647eb17699af79c82328192cecd.dir
-      size: 16420654
-      nfiles: 15
+      md5: b55fef58b09e2b93e775d7b403818297.dir
+      size: 25927454
+      nfiles: 27
   raw_preview:
     cmd: julia --project=@. 'scripts/raw_catalog_preview.jl'
     deps:
