@@ -23,9 +23,9 @@ stages:
     deps:
     - path: data/arrow
       hash: md5
-      md5: a3ee8647eb17699af79c82328192cecd.dir
-      size: 16420654
-      nfiles: 15
+      md5: b55fef58b09e2b93e775d7b403818297.dir
+      size: 25927454
+      nfiles: 27
     - path: scripts/raw_catalog_preview.jl
       hash: md5
       md5: ef0d3cf11cd6e73cec1ba5aff621c82b
@@ -33,6 +33,6 @@ stages:
     outs:
     - path: preview/eqkmap
       hash: md5
-      md5: 013427692a7fdd8519060fc18c051fe1.dir
-      size: 30638202
-      nfiles: 30
+      md5: 2d74093d743cee770f5b5a0bd76e9c74.dir
+      size: 52397203
+      nfiles: 54
