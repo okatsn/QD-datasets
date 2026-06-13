@@ -1,12 +1,7 @@
 Coulombian
-disorderness
-hyperparameters
 Langevin
+tribo-chemical
+disorderness
 Potenza
 Taoyuan
-tribo-chemical
 Tsung-Hsi
-Voronoi
-seismicity
-hydroseismicity
-hydro-seismicity
